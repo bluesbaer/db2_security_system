@@ -145,7 +145,6 @@ class Gui(tk.Tk):
 
     def init_multi(self):
         self.connect_to_db()
-        print('INITIALIZE MULTI-CLIENT CAPABILITY!')
         # check security-system
         if self.check_secsys():
             # check multi-client
@@ -155,11 +154,11 @@ class Gui(tk.Tk):
                 self.implement_multi()
         else:
             self.error_msg.set('You need to install the SECUSRITY-SYSTEM first')
+        print('INITIALIZE MULTI-CLIENT CAPABILITY!')
         pass
     
     def add_client(self):
         self.db_con = self.connect_to_db()
-        print('ADD CLIENT TO SECURITY-SYSTEM!')
         # check security-system
         if self.check_secsys():
             # check multi-client
@@ -169,6 +168,7 @@ class Gui(tk.Tk):
                 self.error_msg.set('You need to initialize the multi-client capability')
         else:
              self.error_msg.set('You need to install the SECUSRITY-SYSTEM first')
+        print('ADD CLIENT TO SECURITY-SYSTEM!')
         pass
 
     def check_secsys(self):
@@ -184,18 +184,23 @@ class Gui(tk.Tk):
         tb_sql = "SELECT count(*) AS anzahl FROM syscat.tables WHERE tabname IN ('T_USER','T_ROLE','T_TABLE')"
         # Procedure:  SECURITY2 => 1
         pr_sql = "SELECT count(*) AS anzahl FROM syscat.routines WHERE specificname = 'SECURITY2'"
+        print(f"### LOG(bp_sql):{bp_sql}")
         self.db2.exec(bp_sql)
         val = self.db2.fetch()
         if val['ANZAHL'] == 1:
+            print(f"### LOG(ts_sql):{ts_sql}")
             self.db2.exec(ts_sql)
             val = self.db2.fetch()
             if val['ANZAHL'] == 2:
+                print(f"### LOG(sc_sql):{sc_sql}")
                 self.db2.exec(sc_sql)
                 val = self.db2.fetch()
                 if val['ANZAHL'] == 1:
+                    print(f"### LOG(tb_sql):{tb_sql}")
                     self.db2.exec(tb_sql)
                     val = self.db2.fetch()
                     if val['ANZAHL'] == 3:
+                        print(f"### LOG(sql):{pr_sql}")
                         self.db2.exec(pr_sql)
                         val = self.db2.fetch()
                         if val['ANZAHL'] == 1:
@@ -211,12 +216,15 @@ class Gui(tk.Tk):
         s2_sql = "SELECT count(*) AS anzahl FROM syscat.securitylabelcomponents WHERE compname = 'SEC_LEVEL'"
         # SECURITYLABELS = SEC_ROOT => 1
         s3_sql = "SELECT count(*) AS anzahl FROM syscat.securitylabels WHERE seclabelname = 'SEC_ROOT'"
+        print(f"### LOG(s1_sql):{s1_sql}")
         self.db2.exec(s1_sql)
         val = self.db2.fetch()
         if val['ANZAHL'] == 1:
+            print(f"### LOG(s2_sql):{s2_sql}")
             self.db2.exec(s2_sql)
             val = self.db2.fetch()
             if val['ANZAHL'] == 1:
+                print(f"### LOG(s3_sql):{s3_sql}")
                 self.db2.exec(s3_sql)
                 val = self.db2.fetch()
                 if val['ANZAHL'] == 1:
@@ -237,20 +245,25 @@ class Gui(tk.Tk):
         # Zuweisen des LABEL zum USER
         i5_sql = f"GRANT SECURITY LABEL secrule.sec_root TO USER $ins_usr$"
         #
+        print(f"### LOG(i1_sql):{i1_sql}")
         if self.db2.exec(i1_sql):
             tmp_sql:str = ""
+            print(f"### LOG(i2_sql):{i2_sql}")
             if self.db2.exec(i2_sql):
+                print(f"### LOG(i3_sql):{i3_sql}")
                 if self.db2.exec(i3_sql):
                     # Get the Name of the Instance-User
                     ins_usr = simpledialog.askstring(title="INSTANZ-USER",\
                         prompt="Input name for instanceuser:")
                     tmp_sql = i4_sql.replace('$ins_usr$',ins_usr)
+                    print(f"### LOG(sql):{tmp_sql}")
                     if self.db2.exec(tmp_sql):
                         tmp_usr = self.con_usr.get()
                         self.con_usr.set(ins_usr)
                         self.connect_to_db()
                         self.con_usr.set(tmp_usr)
                         tmp_sql = i4_sql.replace('$ins_usr$',tmp_usr)
+                        print(f"### LOG(tmp_sql):{tmp_sql}")
                         if self.db2.exec(tmp_sql):
                             self.connect_to_db()
                             ins_usr = tmp_usr
@@ -281,36 +294,45 @@ class Gui(tk.Tk):
         c3_sql = f"SELECT count(*) AS anzahl FROM syscat.securitylabels WHERE seclabelname = 'SEC_{self.sch_name.get()}'"
         #
         for x_sql in [a1_sql, a2_sql, a3_sql, a4_sql, a5_sql]:
+            print(f"### LOG(x_sql):{x_sql}")
             self.db2.exec(x_sql)
         tmp_g = [g1_sql, g2_sql]
         tmp_x = [x1_sql, x2_sql]
         sql_list:list = []
         for g_sql, x_sql in zip(tmp_g, tmp_x):
+            print(f"### LOG(g_sql):{g_sql}")
             self.db2.exec(g_sql)
             row = self.db2.fetch()
             while row != False:
                 tmp_sql:str = ""
                 tmp_sql = x_sql.replace("$tabname$",row['TABNAME'])
-                print(f"### tmp_sql:{tmp_sql} ###")
+                print(f"### LOG(tmp_sql):{tmp_sql} ###")
                 sql_list.append(tmp_sql)
                 row = self.db2.fetch()
         for x_sql in sql_list:
+            print(f"### LOG(x_sql):{x_sql}")
             self.db2.exec(x_sql)
         # check securitylabelcomponent
+        print(f"### LOG(c1_sql):{c1_sql}")
         self.db2.exec(c1_sql)
         flag = self.db2.fetch()
         if flag['ANZAHL'] >= 1:
             # check securitylabelcomponentelement
+            print(f"### LOG(c2_sql):{c2_sql}")
             self.db2.exec(c2_sql)
             flag = self.db2.fetch()
             if flag['ANZAHL'] == 0:
+                print(f"### LOG(l1_sql):{l1_sql}")
                 self.db2.exec(l1_sql)
             # check security_label
+            print(f"### LOG(c3_sql):{c3_sql}")
             self.db2.exec(c3_sql)
             flag = self.db2.fetch()
             if flag['ANZAHL'] == 0:
+                print(f"### LOG(l2_sql):{l2_sql}")
                 self.db2.exec(l2_sql)
             # grant label
+            print(f"### LOG(l3_sql):{l3_sql}")
             self.db2.exec(l3_sql)
         pass
     
