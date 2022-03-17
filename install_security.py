@@ -657,7 +657,7 @@ class Setup():
         self.Bt1.bind('<Button-1>',self.start_install)
         self.server.focus()
 
-    def start_install(self):
+    def start_install(self,*args):
         if self.connect_instance_user():
             if self.connect_connect_user():
                 self.install_routine()

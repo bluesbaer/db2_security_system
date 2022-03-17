@@ -2,6 +2,7 @@
 
 import tkinter as tk
 from tkinter import ttk, simpledialog
+from datetime import datetime
 import sec_db2 as driver
 
 class Gui(tk.Tk):
@@ -144,30 +145,43 @@ class Gui(tk.Tk):
         return status
 
     def init_multi(self):
+        self.log_file = open('INIT.log','a')
+        self.log_file.write(f"BEGIN: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         self.connect_to_db()
         # check security-system
         if self.check_secsys():
             # check multi-client
             if self.check_multi():
                 self.error_msg.set('MULTI-CLIENT CAPABILITY ALREADY EXISTS')
+                self.log_file.write('### MULTI-CLIENT CAPABILITY ALREADY EXISTS\n')
             else:
+                self.log_file.write('### INITIALIZE MULTI-CLIENT CAPABILITY!\n')
                 self.implement_multi()
+                self.log_file.close()
         else:
             self.error_msg.set('You need to install the SECUSRITY-SYSTEM first')
+            self.log_file.write('### You need to install the SECUSRITY-SYSTEM first\n')
         print('INITIALIZE MULTI-CLIENT CAPABILITY!')
         pass
     
     def add_client(self):
+        log_name = self.sch_name.get()
+        self.log_file = open(f'{log_name}.log','a')
+        self.log_file.write(f"BEGIN: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         self.db_con = self.connect_to_db()
         # check security-system
         if self.check_secsys():
             # check multi-client
             if self.check_multi():
+                self.log_file.write('### ADD CLIENT TO SECURITY-SYSTEM!\n')
                 self.add_schema_client()
+                self.log_file.close()
             else:
                 self.error_msg.set('You need to initialize the multi-client capability')
+                self.log_file.write('### You need to initialize the multi-client capability\n')
         else:
              self.error_msg.set('You need to install the SECUSRITY-SYSTEM first')
+             self.log_file.write('### You need to install the SECUSRITY-SYSTEM first\n')
         print('ADD CLIENT TO SECURITY-SYSTEM!')
         pass
 
@@ -184,23 +198,23 @@ class Gui(tk.Tk):
         tb_sql = "SELECT count(*) AS anzahl FROM syscat.tables WHERE tabname IN ('T_USER','T_ROLE','T_TABLE')"
         # Procedure:  SECURITY2 => 1
         pr_sql = "SELECT count(*) AS anzahl FROM syscat.routines WHERE specificname = 'SECURITY2'"
-        print(f"### LOG(bp_sql):{bp_sql}")
+        self.log_file.write(f"### (bp_sql):{bp_sql}\n")
         self.db2.exec(bp_sql)
         val = self.db2.fetch()
         if val['ANZAHL'] == 1:
-            print(f"### LOG(ts_sql):{ts_sql}")
+            self.log_file.write(f"### (ts_sql):{ts_sql}\n")
             self.db2.exec(ts_sql)
             val = self.db2.fetch()
             if val['ANZAHL'] == 2:
-                print(f"### LOG(sc_sql):{sc_sql}")
+                self.log_file.write(f"### (sc_sql):{sc_sql}\n")
                 self.db2.exec(sc_sql)
                 val = self.db2.fetch()
                 if val['ANZAHL'] == 1:
-                    print(f"### LOG(tb_sql):{tb_sql}")
+                    self.log_file.write(f"### (tb_sql):{tb_sql}\n")
                     self.db2.exec(tb_sql)
                     val = self.db2.fetch()
                     if val['ANZAHL'] == 3:
-                        print(f"### LOG(sql):{pr_sql}")
+                        self.log_file.write(f"### (sql):{pr_sql}\n")
                         self.db2.exec(pr_sql)
                         val = self.db2.fetch()
                         if val['ANZAHL'] == 1:
@@ -216,15 +230,15 @@ class Gui(tk.Tk):
         s2_sql = "SELECT count(*) AS anzahl FROM syscat.securitylabelcomponents WHERE compname = 'SEC_LEVEL'"
         # SECURITYLABELS = SEC_ROOT => 1
         s3_sql = "SELECT count(*) AS anzahl FROM syscat.securitylabels WHERE seclabelname = 'SEC_ROOT'"
-        print(f"### LOG(s1_sql):{s1_sql}")
+        self.log_file.write(f"### (s1_sql):{s1_sql}\n")
         self.db2.exec(s1_sql)
         val = self.db2.fetch()
         if val['ANZAHL'] == 1:
-            print(f"### LOG(s2_sql):{s2_sql}")
+            self.log_file.write(f"### (s2_sql):{s2_sql}\n")
             self.db2.exec(s2_sql)
             val = self.db2.fetch()
             if val['ANZAHL'] == 1:
-                print(f"### LOG(s3_sql):{s3_sql}")
+                self.log_file.write(f"### (s3_sql):{s3_sql}\n")
                 self.db2.exec(s3_sql)
                 val = self.db2.fetch()
                 if val['ANZAHL'] == 1:
@@ -239,36 +253,57 @@ class Gui(tk.Tk):
         # Erstellen des LBAC LABEL
         i3_sql = "CREATE SECURITY LABEL secrule.sec_root COMPONENT sec_level 'ROOT'"
         # Zuweisen des LABEL zum USER
-        i4_sql = f"GRANT SECURITY LABEL secrule.sec_root TO USER $ins_usr$"
+        i4_sql = f"GRANT SECURITY LABEL secrule.sec_root TO USER $user$"
         # Datenbankverbindung abbrechen
         # Der Instance-User meldet sich an der Datenbank an
         # Zuweisen des LABEL zum USER
         i5_sql = f"GRANT SECURITY LABEL secrule.sec_root TO USER $ins_usr$"
         #
-        print(f"### LOG(i1_sql):{i1_sql}")
-        if self.db2.exec(i1_sql):
-            tmp_sql:str = ""
-            print(f"### LOG(i2_sql):{i2_sql}")
-            if self.db2.exec(i2_sql):
-                print(f"### LOG(i3_sql):{i3_sql}")
-                if self.db2.exec(i3_sql):
-                    # Get the Name of the Instance-User
-                    ins_usr = simpledialog.askstring(title="INSTANZ-USER",\
-                        prompt="Input name for instanceuser:")
-                    tmp_sql = i4_sql.replace('$ins_usr$',ins_usr)
-                    print(f"### LOG(sql):{tmp_sql}")
-                    if self.db2.exec(tmp_sql):
-                        tmp_usr = self.con_usr.get()
-                        self.con_usr.set(ins_usr)
-                        self.connect_to_db()
-                        self.con_usr.set(tmp_usr)
-                        tmp_sql = i4_sql.replace('$ins_usr$',tmp_usr)
-                        print(f"### LOG(tmp_sql):{tmp_sql}")
-                        if self.db2.exec(tmp_sql):
-                            self.connect_to_db()
-                            ins_usr = tmp_usr
-                            if self.db2.exec(i5_sql):
-                                self.err_msg.set('Die Datenbank is nun Initialisiert')
+        self.log_file.write(f"### (i1_sql):{i1_sql}\n")
+        self.db2.exec(i1_sql)
+        tmp_sql:str = ""
+        self.log_file.write(f"### (i2_sql):{i2_sql}\n")
+        self.db2.exec(i2_sql)
+        self.log_file.write(f"### (i3_sql):{i3_sql}\n")
+        self.db2.exec(i3_sql)
+        # Get the Name of the Instance-User
+        self.ins_usr = simpledialog.askstring(title="INSTANZ-USER",\
+            prompt="Input name for instanceuser:")
+        # SEC_USER => INSTANCE_USER
+        self.connect_to_db(self.ins_usr)
+        # GRANT LABEL ... TO USER SEC_USER
+        tmp_sql = i4_sql.replace('$user$',self.sec_usr.get())
+        self.log_file.write(f"### (tmp_sql):{tmp_sql}\n")
+        self.db2.exec(tmp_sql)
+        # INSTANCE_USER => SEC_USER
+        self.connect_to_db()
+        # GRANT LABEL ... TO USER INSTANCE_USER
+        tmp_sql = i4_sql.replace('$user$',self.ins_usr)
+        self.log_file.write(f"### (tmp_sql):{tmp_sql}\n")
+        self.db2.exec(tmp_sql)
+        self.log_file.write('### Die Datenbank is nun Initialisiert\n')
+        # ADD SECURITY POLICY & LABEL TO Tables
+        adm_sql_list:list = []
+        sec_sql_list:list = []
+        sel_sql = "SELECT TABNAME FROM SYSCAT.TABLES WHERE TABSCHEMA = 'SEC' AND TYPE = 'T'"
+        self.db2.exec(sel_sql)
+        row = self.db2.fetch()
+        if row != False:
+            adm_sql_list.append(f"ALTER TABLE SEC.{row['TABNAME']} ADD SECURITY POLICY SECRULE")
+            sec_sql_list.append(f"ALTER TABLE SEC.{row['TABNAME']} ADD COLUMN LBL DB2SECURITYLABEL IMPLICITLY HIDDEN")
+            row = self.db2.fetch()
+            usr_chk = "SELECT session_user FROM sysibm.sysdummy1"
+            self.db2.exec(usr_chk)
+            row = self.db2.fetch()
+        self.db2.exec('SET SESSION_USER = ' + self.adm_usr.get())
+        for line in adm_sql_list:
+            self.log_file.write(f"### (add_pol) {line}\n")
+            self.db2.exec(line)
+        # SEC_USER => INSTANCE_USER
+        self.connect_to_db(self.ins_usr)
+        for line in sec_sql_list:
+            self.log_file.write(f"### (add_lbl) {line}\n")
+            self.db2.exec(line)
         pass
 
     def add_schema_client(self):
@@ -294,49 +329,50 @@ class Gui(tk.Tk):
         c3_sql = f"SELECT count(*) AS anzahl FROM syscat.securitylabels WHERE seclabelname = 'SEC_{self.sch_name.get()}'"
         #
         for x_sql in [a1_sql, a2_sql, a3_sql, a4_sql, a5_sql]:
-            print(f"### LOG(x_sql):{x_sql}")
+            self.log_file.write(f"### (x_sql):{x_sql}\n")
             self.db2.exec(x_sql)
         tmp_g = [g1_sql, g2_sql]
         tmp_x = [x1_sql, x2_sql]
         sql_list:list = []
         for g_sql, x_sql in zip(tmp_g, tmp_x):
-            print(f"### LOG(g_sql):{g_sql}")
+            self.log_file.write(f"### (g_sql):{g_sql}\n")
             self.db2.exec(g_sql)
             row = self.db2.fetch()
             while row != False:
                 tmp_sql:str = ""
                 tmp_sql = x_sql.replace("$tabname$",row['TABNAME'])
-                print(f"### LOG(tmp_sql):{tmp_sql} ###")
+                self.log_file.write(f"### (tmp_sql):{tmp_sql}\n")
                 sql_list.append(tmp_sql)
                 row = self.db2.fetch()
         for x_sql in sql_list:
-            print(f"### LOG(x_sql):{x_sql}")
+            self.log_file.write(f"### (x_sql):{x_sql}\n")
             self.db2.exec(x_sql)
         # check securitylabelcomponent
-        print(f"### LOG(c1_sql):{c1_sql}")
+        self.log_file.write(f"### (c1_sql):{c1_sql}\n")
         self.db2.exec(c1_sql)
         flag = self.db2.fetch()
         if flag['ANZAHL'] >= 1:
             # check securitylabelcomponentelement
-            print(f"### LOG(c2_sql):{c2_sql}")
+            self.log_file.write(f"### (c2_sql):{c2_sql}\n")
             self.db2.exec(c2_sql)
             flag = self.db2.fetch()
             if flag['ANZAHL'] == 0:
-                print(f"### LOG(l1_sql):{l1_sql}")
+                self.log_file.write(f"### (l1_sql):{l1_sql}\n")
                 self.db2.exec(l1_sql)
             # check security_label
-            print(f"### LOG(c3_sql):{c3_sql}")
+            self.log_file.write(f"### (c3_sql):{c3_sql}\n")
             self.db2.exec(c3_sql)
             flag = self.db2.fetch()
             if flag['ANZAHL'] == 0:
-                print(f"### LOG(l2_sql):{l2_sql}")
+                self.log_file.write(f"### (l2_sql):{l2_sql}\n")
                 self.db2.exec(l2_sql)
             # grant label
-            print(f"### LOG(l3_sql):{l3_sql}")
+            self.log_file.write(f"### (l3_sql):{l3_sql}\n")
+            self.log_file.write(f'### Der User:{self.sch_sec_usr.get()} für das Schema:{self.sch_name.get()} ist nun in der Datenbank aktiviert\n')
             self.db2.exec(l3_sql)
         pass
     
-    def connect_to_db(self):
+    def connect_to_db(self, instance_user=""):
         tmp_ssl:str = ""
         if self.ssl_path.get():
             if self.ssl_key.get():
@@ -344,21 +380,35 @@ class Gui(tk.Tk):
             if self.ssl_stash.get():
                 tmp_ssl += "SSLClientKeystash="+self.ssl_path.get()+"/"+self.ssl_stash.get()
                 tmp_ssl = ";SECURITY=ssl;" + tmp_ssl
-        tmp_pwd = simpledialog.askstring(title="Password",\
-            prompt="Input password for user >> "+str(self.con_usr.get())+" <<",show="*")
-        if tmp_pwd:
-            con_flag = self.db2.open(self.srv_name.get(),self.srv_port.get(),self.db_name.get(),tmp_ssl,self.con_usr.get(),tmp_pwd)
-            if con_flag:
-                tmp:str = ""
-                tmp += f"Server: {self.srv_name.get()}     "
-                tmp += f"Port: {self.srv_port.get()}     "
-                tmp += f"Database: {self.db_name.get()}     "
-                tmp += f"User: {self.con_usr.get()}     "
-                self.db2.exec('SET SESSION_USER = ' + self.sec_usr.get())
-                self.error_msg.set(tmp)
-            else:
-                self.error_msg.set("")
-
+        if instance_user == "":
+            tmp_pwd = simpledialog.askstring(title="Password",\
+                prompt="Input password for user >> "+str(self.con_usr.get())+" <<",show="*")
+            if tmp_pwd:
+                con_flag = self.db2.open(self.srv_name.get(),self.srv_port.get(),self.db_name.get(),tmp_ssl,self.con_usr.get(),tmp_pwd)
+                if con_flag:
+                    tmp:str = ""
+                    tmp += f"Server: {self.srv_name.get()}     "
+                    tmp += f"Port: {self.srv_port.get()}     "
+                    tmp += f"Database: {self.db_name.get()}     "
+                    tmp += f"User: {self.con_usr.get()}     "
+                    self.db2.exec('SET SESSION_USER = ' + self.sec_usr.get())
+                    self.error_msg.set(tmp)
+                else:
+                    self.error_msg.set("")
+        else:
+            tmp_pwd = simpledialog.askstring(title="Password",\
+                prompt="Input password for user >> "+str(instance_user)+" <<",show="*")
+            if tmp_pwd:
+                con_flag = self.db2.open(self.srv_name.get(),self.srv_port.get(),self.db_name.get(),tmp_ssl,instance_user,tmp_pwd)
+                if con_flag:
+                    tmp:str = ""
+                    tmp += f"Server: {self.srv_name.get()}     "
+                    tmp += f"Port: {self.srv_port.get()}     "
+                    tmp += f"Database: {self.db_name.get()}     "
+                    tmp += f"User: {instance_user}     "
+                    self.error_msg.set(tmp)
+                else:
+                    self.error_msg.set("")
 
 if __name__ == '__main__':
     window = Gui()
