@@ -281,29 +281,16 @@ class Gui(tk.Tk):
         tmp_sql = i4_sql.replace('$user$',self.ins_usr)
         self.log_file.write(f"### (tmp_sql):{tmp_sql}\n")
         self.db2.exec(tmp_sql)
-        self.log_file.write('### Die Datenbank is nun Initialisiert\n')
         # ADD SECURITY POLICY & LABEL TO Tables
-        adm_sql_list:list = []
-        sec_sql_list:list = []
-        sel_sql = "SELECT TABNAME FROM SYSCAT.TABLES WHERE TABSCHEMA = 'SEC' AND TYPE = 'T'"
-        self.db2.exec(sel_sql)
-        row = self.db2.fetch()
-        if row != False:
-            adm_sql_list.append(f"ALTER TABLE SEC.{row['TABNAME']} ADD SECURITY POLICY SECRULE")
-            sec_sql_list.append(f"ALTER TABLE SEC.{row['TABNAME']} ADD COLUMN LBL DB2SECURITYLABEL IMPLICITLY HIDDEN")
-            row = self.db2.fetch()
-            usr_chk = "SELECT session_user FROM sysibm.sysdummy1"
-            self.db2.exec(usr_chk)
-            row = self.db2.fetch()
-        self.db2.exec('SET SESSION_USER = ' + self.adm_usr.get())
-        for line in adm_sql_list:
-            self.log_file.write(f"### (add_pol) {line}\n")
-            self.db2.exec(line)
         # SEC_USER => INSTANCE_USER
         self.connect_to_db(self.ins_usr)
-        for line in sec_sql_list:
-            self.log_file.write(f"### (add_lbl) {line}\n")
-            self.db2.exec(line)
+        obj_list = ['T_USER','T_ROLE','T_SCHEMA','T_TABLE','T_ROUTINE','T_SEQUENCE','T_USR2ROL','T_SCH2ROL','T_TBL2ROL','T_ROU2ROL','T_SEQ2ROL']
+        for obj in obj_list:
+            self.db2.exec(f"ALTER TABLE SEC.{obj} ADD SECURITY POLICY SECRULE")
+            self.log_file.write(f"### (add_pol) ALTER TABLE SEC.{obj} ADD SECURITY POLICY SECRULE\n")
+            self.db2.exec(f"ALTER TABLE SEC.{obj} ADD COLUMN LBL DB2SECURITYLABEL IMPLICITLY HIDDEN")
+            self.log_file.write(f"### (add_lbl) ALTER TABLE SEC.{obj} ADD COLUMN LBL DB2SECURITYLABEL IMPLICITLY HIDDEN\n")
+        self.log_file.write('### Die Datenbank is nun Initialisiert\n')
         pass
 
     def add_schema_client(self):
