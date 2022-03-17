@@ -33,10 +33,6 @@ class Gui(tk.Tk):
         super().__init__()
         self.root = self
         self.root.title('Database Security System by M. Wagner')
-        #self.frm = None
-        #self.txt_chk = ''
-        #self.txt_crt = ''
-        #self.label_font = {'size':20,'weight':'BOLD'}
 
 
 class View(tk.Tk):
@@ -1006,6 +1002,8 @@ class Setup():
         for tab_name in tab_name_list:
             sql = f"GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE SEC.{tab_name} TO USER {sec_user}"
             self.ins_db2.exec(sql)
+        sql = f"GRANT EXECUTE ON PROCEDURE SEC.SECURITY2 TO USER {sec_user}"
+        self.ins_db2.exec(sql)
 
     def insert_defaults(self):
         admin_user = self.adm_usr.get()
