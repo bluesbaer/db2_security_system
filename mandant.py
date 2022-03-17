@@ -357,6 +357,27 @@ class Gui(tk.Tk):
             self.log_file.write(f"### (l3_sql):{l3_sql}\n")
             self.log_file.write(f'### Der User:{self.sch_sec_usr.get()} für das Schema:{self.sch_name.get()} ist nun in der Datenbank aktiviert\n')
             self.db2.exec(l3_sql)
+            # get the last number for an security-user
+            id_sql = "SELECT MIN(USR_ID) AS ID FROM SEC.T_USER"
+            self.db2.exec(id_sql)
+            usr_id = self.db2.fetch()
+            # connect as the new connect-user
+            self.connect_to_db(self.sch_con_usr.get())
+            # become the new security-user
+            set_sql = f"SET SESSION_USER = {self.sch_sec_usr.get()}"
+            # get the activation date
+            tmp_date = datetime.now()
+            now = tmp_date.strftime('%Y-%m-%d')
+            # insert ADM & SEC into T_USER
+            sec_sql1 = f"INSERT INTO SEC.T_USER (USR_ID,USR_NAME,USR_CONNECT,USR_START,USR_END,USR_MARK) VALUES "
+            sec_sql1 += f"({usr_id - 1},'{self.sch_adm_usr.get()}','{self.sch_con_usr.get()}','{now}','2999-12-31','A')"
+            self.db2.exec(sec_sql1)
+            sec_sql2 = f"INSERT INTO SEC.T_USER (USR_ID,USR_NAME,USR_CONNECT,USR_START,USR_END,USR_MARK) VALUES "
+            sec_sql2 += f"({usr_id - 2},'{self.sch_sec_usr.get()}','{self.sch_con_usr.get()}','{now}','2999-12-31','S')"
+            self.db2.exec(sec_sql2)
+            # insert SCHEMA into T_SCHEMA
+            sec_sql3 = f"INSERT INTO SEC.T_SCHEMA (SCH_NAME,SCH_START,SCH_END) VALUES ('{self.sch_name.get()}','{now}','2999-12-31')"
+            self.db2.exec(sec_sql3)
         pass
     
     def connect_to_db(self, instance_user=""):
