@@ -314,10 +314,11 @@ class Gui(tk.Tk):
         c1_sql = f"SELECT count(*) AS anzahl FROM syscat.securitylabelcomponents WHERE compname = 'SEC_LEVEL'"
         c2_sql = f"SELECT count(*) AS anzahl FROM syscat.securitylabelcomponentelements WHERE elementvalue = '{self.sch_name.get()}'"
         c3_sql = f"SELECT count(*) AS anzahl FROM syscat.securitylabels WHERE seclabelname = 'SEC_{self.sch_name.get()}'"
-        #
+        # Execute GRANTS a1 - a5
         for x_sql in [a1_sql, a2_sql, a3_sql, a4_sql, a5_sql]:
             self.log_file.write(f"### (x_sql):{x_sql}\n")
             self.db2.exec(x_sql)
+        # Execute GRANTS g1 - g2 & x1 - x2
         tmp_g = [g1_sql, g2_sql]
         tmp_x = [x1_sql, x2_sql]
         sql_list:list = []
