@@ -165,7 +165,7 @@ class Gui(tk.Tk):
         pass
     
     def add_client(self):
-        log_name = self.sch_name.get()
+        log_name = self.sch_name.get().upper()
         self.log_file = open(f'{log_name}.log','a')
         self.log_file.write(f"BEGIN: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         self.db_con = self.connect_to_db()
@@ -272,7 +272,7 @@ class Gui(tk.Tk):
         # SEC_USER => INSTANCE_USER
         self.connect_to_db(self.ins_usr)
         # GRANT LABEL ... TO USER SEC_USER
-        tmp_sql = i4_sql.replace('$user$',self.sec_usr.get())
+        tmp_sql = i4_sql.replace('$user$',self.sec_usr.get().upper())
         self.log_file.write(f"### (tmp_sql):{tmp_sql}\n")
         self.db2.exec(tmp_sql)
         # INSTANCE_USER => SEC_USER
@@ -295,25 +295,25 @@ class Gui(tk.Tk):
 
     def add_schema_client(self):
         # GRANT DB-AUTH
-        a1_sql = f"GRANT CONNECT ON DATABASE TO USER {self.sch_con_usr.get()}"
-        a2_sql = f"GRANT DBADM WITHOUT DATAACCESS WITHOUT ACCESSCTRL ON DATABASE TO USER {self.sch_adm_usr.get()}"
-        a3_sql = f"GRANT SECADM ON DATABASE TO USER {self.sch_sec_usr.get()}"
-        a4_sql = f"GRANT SETSESSIONUSER ON USER {self.sch_adm_usr.get()} TO USER {self.sch_con_usr.get()}"
-        a5_sql = f"GRANT SETSESSIONUSER ON USER {self.sch_sec_usr.get()} TO USER {self.sch_con_usr.get()}"
+        a1_sql = f"GRANT CONNECT ON DATABASE TO USER {self.sch_con_usr.get().upper()}"
+        a2_sql = f"GRANT DBADM WITHOUT DATAACCESS WITHOUT ACCESSCTRL ON DATABASE TO USER {self.sch_adm_usr.get().upper()}"
+        a3_sql = f"GRANT SECADM ON DATABASE TO USER {self.sch_sec_usr.get().upper()}"
+        a4_sql = f"GRANT SETSESSIONUSER ON USER {self.sch_adm_usr.get().upper()} TO USER {self.sch_con_usr.get().upper()}"
+        a5_sql = f"GRANT SETSESSIONUSER ON USER {self.sch_sec_usr.get().upper()} TO USER {self.sch_con_usr.get().upper()}"
         # GRANT TABLE-AUTH
         tabname:str = ""
         g1_sql = f"SELECT tabname FROM syscat.tables WHERE tabschema = 'SEC' AND type = 'T'"
-        x1_sql = f"GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE SEC.$tabname$ TO USER {self.sch_sec_usr.get()}"
+        x1_sql = f"GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE SEC.$tabname$ TO USER {self.sch_sec_usr.get().upper()}"
         g2_sql = f"SELECT tabname FROM syscat.tables WHERE tabschema = 'SEC' AND type = 'V'"
-        x2_sql = f"GRANT SELECT ON TABLE SEC.$tabname$ TO USER {self.sch_sec_usr.get()}"
+        x2_sql = f"GRANT SELECT ON TABLE SEC.$tabname$ TO USER {self.sch_sec_usr.get().upper()}"
         # CREATE AND GRANT LABEL
-        l1_sql = f"ALTER SECURITY LABEL COMPONENT sec_level ADD ELEMENT '{self.sch_name.get()}' UNDER 'ROOT'"
-        l2_sql = f"CREATE SECURITY LABEL secrule.sec_{self.sch_name.get()} COMPONENT sec_level '{self.sch_name.get()}'"
-        l3_sql = f"GRANT SECURITY LABEL secrule.sec_{self.sch_name.get()} TO USER {self.sch_sec_usr.get()}"
+        l1_sql = f"ALTER SECURITY LABEL COMPONENT sec_level ADD ELEMENT '{self.sch_name.get().upper()}' UNDER 'ROOT'"
+        l2_sql = f"CREATE SECURITY LABEL secrule.sec_{self.sch_name.get().upper()} COMPONENT sec_level '{self.sch_name.get().upper()}'"
+        l3_sql = f"GRANT SECURITY LABEL secrule.sec_{self.sch_name.get().upper()} TO USER {self.sch_sec_usr.get().upper()}"
         # CHECK LABEL, COMPONENTS & ELEMENTS
         c1_sql = f"SELECT count(*) AS anzahl FROM syscat.securitylabelcomponents WHERE compname = 'SEC_LEVEL'"
-        c2_sql = f"SELECT count(*) AS anzahl FROM syscat.securitylabelcomponentelements WHERE elementvalue = '{self.sch_name.get()}'"
-        c3_sql = f"SELECT count(*) AS anzahl FROM syscat.securitylabels WHERE seclabelname = 'SEC_{self.sch_name.get()}'"
+        c2_sql = f"SELECT count(*) AS anzahl FROM syscat.securitylabelcomponentelements WHERE elementvalue = '{self.sch_name.get().upper()}'"
+        c3_sql = f"SELECT count(*) AS anzahl FROM syscat.securitylabels WHERE seclabelname = 'SEC_{self.sch_name.get().upper()}'"
         # Execute GRANTS a1 - a5
         for x_sql in [a1_sql, a2_sql, a3_sql, a4_sql, a5_sql]:
             self.log_file.write(f"### (x_sql):{x_sql}\n")
@@ -356,16 +356,16 @@ class Gui(tk.Tk):
                 self.db2.exec(l2_sql)
             # grant label
             self.log_file.write(f"### (l3_sql):{l3_sql}\n")
-            self.log_file.write(f'### Der User:{self.sch_sec_usr.get()} für das Schema:{self.sch_name.get()} ist nun in der Datenbank aktiviert\n')
+            self.log_file.write(f'### Der User:{self.sch_sec_usr.get().upper()} für das Schema:{self.sch_name.get().upper()} ist nun in der Datenbank aktiviert\n')
             self.db2.exec(l3_sql)
             # get the last number for an security-user
             id_sql = "SELECT MIN(USR_ID) AS ID FROM SEC.T_USER"
             self.db2.exec(id_sql)
             usr_id = self.db2.fetch()
             # connect as the new connect-user
-            self.connect_to_db(self.sch_con_usr.get())
+            self.connect_to_db(self.sch_con_usr.get().upper())
             # become the new security-user
-            set_sql = f"SET SESSION_USER = {self.sch_sec_usr.get()}"
+            set_sql = f"SET SESSION_USER = {self.sch_sec_usr.get().upper()}"
             self.db2.exec(set_sql)
             # get the activation date
             tmp_date = datetime.now()
