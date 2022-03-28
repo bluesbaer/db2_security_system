@@ -366,19 +366,33 @@ class Gui(tk.Tk):
             self.connect_to_db(self.sch_con_usr.get())
             # become the new security-user
             set_sql = f"SET SESSION_USER = {self.sch_sec_usr.get()}"
+            self.db2.exec(set_sql)
             # get the activation date
             tmp_date = datetime.now()
             now = tmp_date.strftime('%Y-%m-%d')
             # insert ADM & SEC into T_USER
             sec_sql1 = f"INSERT INTO SEC.T_USER (USR_ID,USR_NAME,USR_CONNECT,USR_START,USR_END,USR_MARK) VALUES "
-            sec_sql1 += f"({usr_id - 1},'{self.sch_adm_usr.get()}','{self.sch_con_usr.get()}','{now}','2999-12-31','A')"
+            sec_sql1 += f"({usr_id['ID'] - 1},'{self.sch_adm_usr.get().upper()}','{self.sch_con_usr.get().upper()}','{now}','2999-12-31','A')"
             self.db2.exec(sec_sql1)
             sec_sql2 = f"INSERT INTO SEC.T_USER (USR_ID,USR_NAME,USR_CONNECT,USR_START,USR_END,USR_MARK) VALUES "
-            sec_sql2 += f"({usr_id - 2},'{self.sch_sec_usr.get()}','{self.sch_con_usr.get()}','{now}','2999-12-31','S')"
+            sec_sql2 += f"({usr_id['ID'] - 2},'{self.sch_sec_usr.get().upper()}','{self.sch_con_usr.get().upper()}','{now}','2999-12-31','S')"
             self.db2.exec(sec_sql2)
             # insert SCHEMA into T_SCHEMA
-            sec_sql3 = f"INSERT INTO SEC.T_SCHEMA (SCH_NAME,SCH_START,SCH_END) VALUES ('{self.sch_name.get()}','{now}','2999-12-31')"
+            sec_sql3 = f"INSERT INTO SEC.T_SCHEMA (SCH_NAME,SCH_START,SCH_END) VALUES ('{self.sch_name.get().upper()}','{now}','2999-12-31')"
             self.db2.exec(sec_sql3)
+            # insert ROLE into T_ROLE
+            sec_sql4 = f"INSERT INTO SEC.T_ROLE (ROL_NAME,ROL_START,ROL_END,ROL_TYPE) VALUES ('{self.sch_name.get().upper()}_CONNECT','{now}','2999-12-31','R')"
+            self.db2.exec(sec_sql4)
+            # insert Relation into T_SCH2ROL
+            sec_sql5 = f"SELECT SCH_ID FROM SEC.T_SCHEMA WHERE SCH_NAME = '{self.sch_name.get().upper()}'"
+            self.db2.exec(sec_sql5)
+            sch_id = self.db2.fetch()
+            sec_sql6 = f"SELECT ROL_ID FROM SEC.T_ROLE WHERE ROL_NAME = '{self.sch_name.get().upper()}_CONNECT'"
+            self.db2.exec(sec_sql6)
+            rol_id = self.db2.fetch()
+            sec_sql7 = f"INSERT INTO SEC.T_SCH2ROL (S2R_ROL_ID,S2R_SCH_ID,S2R_SCHADM,S2R_SCHSEC,S2R_START,S2R_END) "
+            sec_sql7 += f"VALUES ({rol_id['ROL_ID']},{sch_id['SCH_ID']},'N','N','{now}','2999-12-31')"
+            self.db2.exec(sec_sql7)
         pass
     
     def connect_to_db(self, instance_user=""):
