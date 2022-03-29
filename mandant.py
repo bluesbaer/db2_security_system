@@ -362,6 +362,10 @@ class Gui(tk.Tk):
             id_sql = "SELECT MIN(USR_ID) AS ID FROM SEC.T_USER"
             self.db2.exec(id_sql)
             usr_id = self.db2.fetch()
+            # get the last number for an security-role
+            id_sql = "SELECT MIN(ROL_ID) AS ID FROM SEC.T_ROLE"
+            self.db2.exec(id_sql)
+            rol_id = self.db2.fetch()
             # connect as the new connect-user
             self.connect_to_db(self.sch_con_usr.get().upper())
             # become the new security-user
@@ -381,7 +385,11 @@ class Gui(tk.Tk):
             sec_sql3 = f"INSERT INTO SEC.T_SCHEMA (SCH_NAME,SCH_START,SCH_END) VALUES ('{self.sch_name.get().upper()}','{now}','2999-12-31')"
             self.db2.exec(sec_sql3)
             # insert ROLE into T_ROLE
-            sec_sql4 = f"INSERT INTO SEC.T_ROLE (ROL_NAME,ROL_START,ROL_END,ROL_TYPE) VALUES ('{self.sch_name.get().upper()}_CONNECT','{now}','2999-12-31','R')"
+            sec_sql4 = f"INSERT INTO SEC.T_ROLE (ROL_ID,ROL_NAME,ROL_START,ROL_END,ROL_TYPE) VALUES "
+            sec_sql4 += f"({rol_id['ID'] - 1},'{self.sch_name.get().upper()}_CONNECT','{now}','2999-12-31','R')"
+            self.db2.exec(sec_sql4)
+            sec_sql4 = f"INSERT INTO SEC.T_ROLE (ROL_ID,ROL_NAME,ROL_START,ROL_END,ROL_TYPE) VALUES "
+            sec_sql4 += f"({rol_id['ID'] - 2},'{self.sch_name.get().upper()}_LOAD','{now}','2999-12-31','R')"
             self.db2.exec(sec_sql4)
             # insert Relation into T_SCH2ROL
             sec_sql5 = f"SELECT SCH_ID FROM SEC.T_SCHEMA WHERE SCH_NAME = '{self.sch_name.get().upper()}'"
