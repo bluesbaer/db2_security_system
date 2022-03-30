@@ -296,7 +296,8 @@ class Gui(tk.Tk):
     def add_schema_client(self):
         # GRANT DB-AUTH
         a1_sql = f"GRANT CONNECT ON DATABASE TO USER {self.sch_con_usr.get().upper()}"
-        a2_sql = f"GRANT DBADM WITHOUT DATAACCESS WITHOUT ACCESSCTRL ON DATABASE TO USER {self.sch_adm_usr.get().upper()}"
+        #a2_sql = f"GRANT SCHEMAADM WITHOUT DATAACCESS WITHOUT ACCESSCTRL ON DATABASE TO USER {self.sch_adm_usr.get().upper()}"
+        a2_sql = f"GRANT ALTERIN,CREATEIN,DROPIN ON SCHEMA {self.sch_name.get().upper()} TO USER {self.sch_adm_usr.get().upper()}"
         a3_sql = f"GRANT SECADM ON DATABASE TO USER {self.sch_sec_usr.get().upper()}"
         a4_sql = f"GRANT SETSESSIONUSER ON USER {self.sch_adm_usr.get().upper()} TO USER {self.sch_con_usr.get().upper()}"
         a5_sql = f"GRANT SETSESSIONUSER ON USER {self.sch_sec_usr.get().upper()} TO USER {self.sch_con_usr.get().upper()}"
