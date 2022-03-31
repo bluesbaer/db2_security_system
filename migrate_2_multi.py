@@ -8,23 +8,19 @@
 
 import sec_db2
 
-server = 'db2amdmt'
-port = 60220
-db = 'amdmt'
+## maintain this section ------------------
+server = 'db2_server'
+port = 50000
+db = 'sample'
 ssl = ''
 user = 'dbconusr'
-pwd = 'dbconusr'
-
-#server = 'db2dr01t'
-#port = 60380
-#db = 'dr01t'
-#ssl = ''
-#user = 'db2dr01t'
-#pwd = 'K7zP5w&'
+pwd = 'dbconpwd'
+session_user = 'dbsecusr'
+## ----------------------------------------
 
 database = sec_db2.Db2()
 database.open(server,port,db,'',user,pwd)
-database.exec('SET SESSION_USER = dbsecusr')
+database.exec(f'SET SESSION_USER = {session_user}')
 
 schema_list:list = []
 table_list:list = []
