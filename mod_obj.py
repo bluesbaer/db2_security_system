@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+## Db2 Security-System
+## Version 1.0
+## Manfred Wagner
+## info@manfred-wagner.at
+
+
 import sec_db2
 import sec_obj
 from copy import deepcopy

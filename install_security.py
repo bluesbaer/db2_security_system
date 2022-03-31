@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+## Db2 Security-System
+## Version 1.0
+## Manfred Wagner
+## info@manfred-wagner.at
+
+
 import tkinter as tk
 from tkinter import Variable, ttk, simpledialog, messagebox
 import sec_db2
@@ -249,37 +255,59 @@ WHERE ra.SCHEMA IN (SELECT rou_schema FROM sec.t_routine)
 AND ra.granteetype = 'R'"""
 # -- ** SIMPLIFY **
 V_USR2ROL = """
-CREATE OR replace VIEW sec.v_usr2rol (usr_id,usr_name,usr_start,usr_end,rol_id,rol_name,rol_start,rol_end,u2r_start,u2r_end) as
-SELECT usr_id,usr_name,usr_start,usr_end,rol_id,rol_name,rol_start,rol_end,u2r_start,u2r_end
-FROM sec.t_usr2rol LEFT OUTER JOIN sec.t_user ON u2r_usr_id = usr_id
-                   LEFT OUTER JOIN sec.t_role ON u2r_rol_id = rol_id """
+CREATE OR REPLACE VIEW sec.v_usr2rol (u2r_id,u2r_start,u2r_end,usr_id,usr_name,usr_connect,usr_start,usr_end,
+       rol_id,rol_name,rol_start,rol_end,s2r_id,s2r_start,s2r_end,sch_name,sch_start,sch_end) AS
+SELECT u2r_id,u2r_start,u2r_end,
+       usr_id,usr_name,usr_connect,usr_start,usr_end,
+       rol_id,rol_name,rol_start,rol_end,
+       s2r_id,s2r_start,s2r_end,
+       sch_name,sch_start,sch_end
+FROM sec.t_usr2rol LEFT OUTER JOIN sec.t_user    ON (u2r_usr_id) = (usr_id)
+                   LEFT OUTER JOIN sec.t_role    ON (u2r_rol_id) = (rol_id)
+                   LEFT OUTER JOIN sec.t_sch2rol ON (rol_id) = (s2r_rol_id)
+                   LEFT OUTER JOIN sec.t_schema  ON (s2r_sch_id) = (sch_id)
+                   """
 V_SCH2ROL = """
 create or replace view sec.v_sch2rol (sch_id,sch_name,sch_start,sch_end,rol_id,rol_name,rol_start,rol_end,s2r_id,s2r_schadm,s2r_schsec,s2r_start,s2r_end) as
 select sch_id,sch_name,sch_start,sch_end,rol_id,rol_name,rol_start,rol_end,s2r_id,s2r_schadm,s2r_schsec,s2r_start,s2r_end
 from sec.t_sch2rol left outer join sec.t_schema on s2r_sch_id = sch_id
                    left outer join sec.t_role   on s2r_rol_id = rol_id"""
 V_TBL2ROL = """
-create or replace view sec.v_tbl2rol (tbl_id,tbl_schema,tbl_name,rol_id,rol_name,t2r_id,t2r_ctlauth,t2r_delauth,t2r_insauth,t2r_selauth,t2r_updauth,t2r_start,t2r_end) as
-select tbl_id,tbl_schema,tbl_name,rol_id,rol_name,t2r_id,t2r_ctlauth,t2r_delauth,t2r_insauth,t2r_selauth,t2r_updauth,t2r_start,t2r_end
-from sec.t_tbl2rol left outer join sec.t_table on t2r_tbl_id = tbl_id
-                   left outer join sec.t_role  on t2r_rol_id = rol_id"""
+CREATE OR REPLACE VIEW sec.v_tbl2rol (t2r_id,t2r_start,t2r_end,t2r_ctlauth,t2r_delauth,t2r_insauth,t2r_selauth,t2r_updauth,
+       tbl_id,tbl_schema,tbl_name,tbl_start,tbl_end,rol_id,rol_name,rol_start,rol_end) AS
+SELECT t2r_id,t2r_start,t2r_end,t2r_ctlauth,t2r_delauth,t2r_insauth,t2r_selauth,t2r_updauth,
+       tbl_id,tbl_schema,tbl_name,tbl_start,tbl_end,
+       rol_id,rol_name,rol_start,rol_end
+FROM sec.t_tbl2rol LEFT OUTER JOIN sec.t_table ON (t2r_tbl_id) = (tbl_id)
+                   LEFT OUTER JOIN sec.t_role  ON (t2r_rol_id) = (rol_id)
+                   """
 V_ROU2ROL = """
-create or replace view sec.v_rou2rol (rou_id,rou_schema,rou_name,rou_specific,rou_type,rol_id,rol_name,r2r_id,r2r_start,r2r_end) as
-select rou_id,rou_schema,rou_name,rou_specific,rou_type,rol_id,rol_name,r2r_id,r2r_start,r2r_end
-from sec.t_rou2rol left outer join sec.t_routine on r2r_rou_id = rou_id
-                   left outer join sec.t_role    on r2r_rol_id = rol_id"""
+CREATE OR REPLACE VIEW sec.v_rou2rol (r2r_id,r2r_start,r2r_end,rou_id,rou_schema,rou_name,rou_specific,rou_start,rou_end,rou_type,
+       rol_id,rol_name,rol_start,rol_end) AS
+SELECT r2r_id,r2r_start,r2r_end,
+       rou_id,rou_schema,rou_name,rou_specific,rou_start,rou_end,rou_type,
+       rol_id,rol_name,rol_start,rol_end
+FROM sec.t_rou2rol LEFT OUTER JOIN sec.t_routine ON (r2r_rou_id) = (rou_id)
+                   LEFT OUTER JOIN sec.t_role    ON (r2r_rol_id) = (rol_id)
+                   """
 V_SEQ2ROL = """
-create or replace view sec.v_seq2rol (seq_id,seq_schema,seq_name,rol_id,rol_name,s2r_id,s2r_start,s2r_end) as
-select seq_id,seq_schema,seq_name,rol_id,rol_name,s2r_id,s2r_start,s2r_end
-from sec.t_seq2rol left outer join sec.t_sequence on s2r_seq_id = seq_id
-                   left outer join sec.t_role     on s2r_rol_id = rol_id"""
+CREATE OR REPLACE VIEW sec.v_seq2rol (s2r_id,s2r_start,s2r_end,seq_id,seq_schema,seq_name,seq_start,seq_end,
+       rol_id,rol_name,rol_start,rol_end) AS 
+SELECT s2r_id,s2r_start,s2r_end,
+       seq_id,seq_schema,seq_name,seq_start,seq_end,
+       rol_id,rol_name,rol_start,rol_end
+FROM sec.t_seq2rol LEFT OUTER JOIN sec.t_sequence ON (s2r_seq_id) = (seq_id)
+                   LEFT OUTER JOIN sec.t_role     ON (s2r_rol_id) = (rol_id)
+                   """
 # -- ** REVOKE **
 V_REVOKE_USER = """
-create or replace view sec.v_revoke_user (action,usr_name,con_usr) as
-select 'REVOKE',sys.surrogateauthid,sys.trustedid
-from syscat.surrogateauthids as sys left outer join sec.t_user as sec on sys.surrogateauthid = sec.usr_name
-where sec.usr_name is NULL
-AND sys.surrogateauthidtype = 'U'"""
+CREATE OR REPLACE VIEW sec.v_revoke_user (action,surrogateauthid,trustedid) AS
+SELECT 'REVOKE',surrogateauthid,trustedid
+FROM syscat.surrogateauthids LEFT OUTER JOIN sec.t_user ON (surrogateauthid) = (usr_name)
+WHERE surrogateauthidtype = 'U'
+AND grantor = session_user
+AND current date NOT BETWEEN usr_start AND usr_end
+"""
 V_REVOKE_ROLE = """
 create or replace view sec.v_revoke_role (action,rol_name) as
 select 'REVOKE',sys.rolename
@@ -287,74 +315,106 @@ from syscat.roles as sys left outer join sec.t_role as sec on sys.rolename = sec
 where sec.rol_name is NULL
 AND sys.roleid >= 1000"""
 V_REVOKE_ROLE_ACCESS = """
-CREATE OR REPLACE VIEW sec.v_revoke_role_access (action,usr_name,rol_name) as
-SELECT 'REVOKE',sys.grantee,sys.rolename
-FROM syscat.roleauth as sys left outer join sec.v_usr2rol as sec on (sys.grantee,sys.rolename) = (sec.usr_name,sec.rol_name)
-WHERE (sec.usr_name is null or sec.rol_name is null)
-AND sys.grantortype <> 'S'"""
+CREATE OR REPLACE VIEW sec.v_revoke_role_access (action,rolename,grantee) AS
+SELECT 'REVOKE',rolename,grantee
+FROM syscat.roleauth LEFT OUTER JOIN sec.v_usr2rol ON (rolename) = (rol_name)
+WHERE grantortype <> 'S'
+AND grantor = session_user
+AND (current date NOT BETWEEN usr_start AND usr_end OR
+     current date NOT BETWEEN rol_start AND rol_end OR
+     current date NOT BETWEEN u2r_start AND u2r_end)
+     """
 V_REVOKE_TABLE_ACCESS = """
-CREATE OR REPLACE VIEW sec.v_revoke_table_access (tbl_schema,tbl_name,rol_name,t2r_ctlauth,t2r_delauth,t2r_insauth,t2r_selauth,t2r_updauth,
-                                                 tabschema,tabname,grantee,controlauth,deleteauth,insertauth,selectauth,updateauth) AS
-SELECT sec.tbl_schema,sec.tbl_name,sec.rol_name,
-       sec.t2r_ctlauth,t2r_delauth,t2r_insauth,t2r_selauth,t2r_updauth,
-       sys.tabschema,sys.tabname,sys.grantee,
-       sys.controlauth,sys.deleteauth,sys.insertauth,sys.selectauth,sys.updateauth
-FROM syscat.tabauth AS sys LEFT OUTER JOIN sec.v_tbl2rol AS sec ON
-    (sys.tabschema,sys.tabname,sys.grantee,sys.CONTROLAUTH,sys.DELETEAUTH,sys.INSERTAUTH,sys.SELECTAUTH,sys.UPDATEAUTH) =
-    (sec.tbl_schema,sec.tbl_name,sec.rol_name,sec.t2r_ctlauth,sec.t2r_delauth,sec.t2r_insauth,sec.t2r_selauth,sec.t2r_updauth) AND sys.granteetype = 'R'
-WHERE sec.tbl_schema IS NULL
-AND GRANTEETYPE = 'R'
-AND sys.tabschema IN (SELECT DISTINCT tbl_schema FROM sec.t_table)"""
+CREATE OR REPLACE VIEW sec.v_revoke_table_access (action,tabschema,tabname,grantee,
+                controlauth,deleteauth,insertauth,selectauth,updateauth,
+                t2r_ctlauth,t2r_delauth,t2r_insauth,t2r_selauth,t2r_updauth,
+                t2r_start,t2r_end,tbl_start,tbl_end,rol_start,rol_end) AS
+SELECT 'REVOKE',tabschema,tabname,grantee,
+                controlauth,deleteauth,insertauth,selectauth,updateauth,
+                t2r_ctlauth,t2r_delauth,t2r_insauth,t2r_selauth,t2r_updauth,
+                t2r_start,t2r_end,tbl_start,tbl_end,rol_start,rol_end
+FROM syscat.tabauth LEFT OUTER JOIN sec.v_tbl2rol ON (tabschema,tabname) = (tbl_schema,tbl_name)
+WHERE grantortype <> 'S'
+AND grantor = session_user
+AND granteetype = 'R'
+"""
 V_REVOKE_ROUTINE_ACCESS = """
-CREATE OR replace VIEW sec.v_revoke_routine_access (rou_id,rou_schema,rou_name,rou_specific,rou_type,rol_id,rol_name,r2r_id,SCHEMA,specificname,routinetype,grantee,granteetype,procname) AS
-SELECT rou_id,rou_schema,rou_name,rou_specific,rou_type,rol_id,rol_name,r2r_id,SCHEMA,specificname,routinetype,grantee,granteetype,procname
-FROM sec.v_routineauth LEFT OUTER JOIN sec.v_rou2rol ON (schema,specificname,grantee) = (rou_schema,rou_specific,rol_name)
-WHERE ROU_SCHEMA IS NULL"""
+CREATE OR REPLACE VIEW sec.v_revoke_routine_access (action,schema,specificname,grantee,routinetype) AS
+SELECT 'REVOKE',schema,specificname,grantee,routinetype
+FROM syscat.routineauth LEFT OUTER JOIN sec.v_rou2rol ON (schema,specificname) = (rou_schema,rou_specific)
+WHERE grantortype <> 'S'
+AND grantor = session_user
+AND granteetype = 'R'
+AND (current date NOT BETWEEN r2r_start AND r2r_end OR
+     current date NOT BETWEEN rou_start AND rou_end OR
+     current date NOT BETWEEN rol_start AND rol_end)
+     """
 V_REVOKE_SEQUENCE_ACCESS = """
-CREATE VIEW sec.v_revoke_sequence_access (seqschema,seqname,grantee) AS
-SELECT sys.seqschema,sys.seqname,sys.grantee
-FROM syscat.sequenceauth AS sys LEFT OUTER JOIN sec.v_seq2rol AS sec ON (sys.seqschema,sys.seqname,sys.grantee) = (sec.seq_schema,sec.seq_name,sec.rol_name)
-WHERE sys.granteetype = 'R'
-AND sec.seq_schema IS NULL"""
+CREATE OR REPLACE VIEW sec.v_revoke_sequence_access (action,seqschema,seqname,grantee) AS
+SELECT 'REVOKE',seqschema,seqname,grantee
+FROM syscat.sequenceauth LEFT OUTER JOIN sec.v_seq2rol ON (seqschema,seqname) = (seq_schema,seq_name)
+WHERE grantortype <> 'S'
+AND grantor = session_user
+AND granteetype = 'R'
+AND (current date NOT BETWEEN s2r_start AND s2r_end OR
+     current date NOT BETWEEN seq_start AND seq_end OR
+     current date NOT BETWEEN rol_start AND rol_end)
+     """
 # -- ** GRANT **
 V_GRANT_USER = """
-create or replace view sec.v_grant_user (action,usr_name,con_usr) as
-select 'GRANT',sec.usr_name,sec.usr_connect
-from sec.t_user as sec left outer join syscat.surrogateauthids as sys on sec.usr_name = sys.surrogateauthid
-where sys.surrogateauthid is NULL
-AND sec.usr_id > 0"""
+CREATE OR REPLACE VIEW sec.v_grant_user (action,usr_name,usr_connect) AS
+SELECT 'GRANT',usr_name,usr_connect
+FROM sec.t_user LEFT OUTER JOIN syscat.surrogateauthids ON (usr_name) = (surrogateauthid)
+WHERE usr_id > 0
+AND surrogateauthid IS NULL
+AND current date BETWEEN usr_start AND usr_end
+"""
 V_GRANT_ROLE = """
 create or replace view sec.v_grant_role (action,rol_name) as
-select 'GRANT',sec.rol_name
+select 'CREATE',sec.rol_name
 from sec.t_role as sec left outer join syscat.roles as sys on sec.rol_name = sys.rolename
 where sys.rolename is NULL
-AND sec.rol_id > 0"""
+AND sec.rol_id > 0
+AND current date BETWEEN rol_start AND rol_end
+"""
 V_GRANT_ROLE_ACCESS = """
-CREATE OR REPLACE VIEW sec.v_grant_role_access (action,usr_name,rol_name) as
-SELECT 'GRANT',sec.usr_name,sec.rol_name
-FROM sec.v_usr2rol as sec left outer join syscat.roleauth as sys on (sec.usr_name,sec.rol_name) = (sys.grantee,sys.rolename)
-WHERE (sys.grantee is null or sys.rolename is null)"""
+CREATE OR REPLACE VIEW sec.v_grant_role_access (action,rol_name,usr_name) AS
+SELECT 'GRANT',rol_name,usr_name
+FROM sec.v_usr2rol LEFT OUTER JOIN syscat.roleauth ON (rol_name) = (rolename) AND grantortype <> 'S'
+WHERE rolename IS NULL
+AND (current date BETWEEN u2r_start AND u2r_end AND
+     current date BETWEEN usr_start AND usr_end AND
+     current date BETWEEN rol_start AND rol_end)
+     """
 V_GRANT_TABLE_ACCESS = """
-CREATE OR REPLACE VIEW sec.v_grant_table_access (tbl_schema,tbl_name,rol_name,t2r_ctlauth,t2r_delauth,t2r_insauth,t2r_selauth,t2r_updauth,
-                                                 tabschema,tabname,grantee,controlauth,deleteauth,insertauth,selectauth,updateauth) AS
-SELECT sec.tbl_schema,sec.tbl_name,sec.rol_name,
-       sec.t2r_ctlauth,t2r_delauth,t2r_insauth,t2r_selauth,t2r_updauth,
-       sys.tabschema,sys.tabname,sys.grantee,
-       sys.controlauth,sys.deleteauth,sys.insertauth,sys.selectauth,sys.updateauth
-FROM sec.v_tbl2rol AS sec LEFT OUTER JOIN syscat.tabauth AS sys ON
-    (sys.tabschema,sys.tabname,sys.grantee,sys.CONTROLAUTH,sys.DELETEAUTH,sys.INSERTAUTH,sys.SELECTAUTH,sys.UPDATEAUTH) =
-    (sec.tbl_schema,sec.tbl_name,sec.rol_name,sec.t2r_ctlauth,sec.t2r_delauth,sec.t2r_insauth,sec.t2r_selauth,sec.t2r_updauth) AND sys.granteetype = 'R'
-WHERE sys.tabschema IS NULL"""
+CREATE OR REPLACE VIEW sec.v_grant_table_access (action,tbl_schema,tbl_name,rol_name,
+               t2r_ctlauth,t2r_delauth,t2r_insauth,t2r_selauth,t2r_updauth,
+               controlauth,deleteauth,insertauth,selectauth,updateauth,
+               t2r_start,t2r_end,tbl_start,tbl_end,rol_start,rol_end) AS
+SELECT 'GRANT',tbl_schema,tbl_name,rol_name,
+               t2r_ctlauth,t2r_delauth,t2r_insauth,t2r_selauth,t2r_updauth,
+               controlauth,deleteauth,insertauth,selectauth,updateauth,
+               t2r_start,t2r_end,tbl_start,tbl_end,rol_start,rol_end
+FROM sec.v_tbl2rol LEFT OUTER JOIN syscat.tabauth ON (tbl_schema,tbl_name) = (tabschema,tabname) AND grantortype <> 'S'
+"""
 V_GRANT_ROUTINE_ACCESS ="""
-CREATE OR replace VIEW sec.v_grant_routine_access (rou_id,rou_schema,rou_name,rou_specific,rou_type,rol_id,rol_name,r2r_id,SCHEMA,specificname,routinetype,grantee,granteetype,procname) AS
-SELECT rou_id,rou_schema,rou_name,rou_specific,rou_type,rol_id,rol_name,r2r_id,SCHEMA,specificname,routinetype,grantee,granteetype,procname
-FROM sec.v_rou2rol LEFT OUTER JOIN sec.v_routineauth ON (rou_schema,rou_specific,rol_name) = (schema,specificname,grantee)
-WHERE SCHEMA IS NULL"""
+CREATE OR REPLACE VIEW sec.v_grant_routine_access (action,rou_schema,rou_specific,rol_name,rou_type) AS
+SELECT 'GRANT',rou_schema,rou_specific ,rol_name,rou_type
+FROM sec.v_rou2rol LEFT OUTER JOIN syscat.routineauth ON (rou_schema,rou_specific) = (schema,specificname) AND grantortype <> 'S'
+WHERE specificname IS NULL
+AND (current date BETWEEN r2r_start AND r2r_end AND
+     current date BETWEEN rou_start AND rou_end AND
+     current date BETWEEN rol_start AND rol_end)
+     """
 V_GRANT_SEQUENCE_ACCESS ="""
-CREATE VIEW sec.v_grant_sequence_access (seq_schema,seq_name,rol_name) AS
-SELECT sec.seq_schema,sec.seq_name,sec.rol_name
-FROM sec.v_seq2rol AS sec LEFT OUTER JOIN syscat.sequenceauth AS sys ON (sec.seq_schema,sec.seq_name,sec.rol_name) = (sys.seqschema,sys.seqname,sys.grantee)
-WHERE sys.seqschema IS NULL"""
+CREATE OR REPLACE VIEW sec.v_grant_sequence_access (action,seq_schema,seq_name,rol_name) AS 
+SELECT 'GRANT',seq_schema,seq_name,rol_name
+FROM sec.v_seq2rol LEFT OUTER JOIN syscat.sequenceauth ON (seq_schema,seq_name) = (seqschema,seqname) AND grantortype <> 'S'
+WHERE seqname IS NULL
+AND (current date BETWEEN s2r_start AND s2r_end AND
+     current date BETWEEN seq_start AND seq_end AND
+     current date BETWEEN rol_start AND rol_end)
+     """
 
 # -- --------------------------------------------------------------------------------
 # -- SECURITY PROCEDURE
@@ -365,248 +425,293 @@ LANGUAGE SQL
 SPECIFIC SECURITY2
 MODIFIES SQL DATA
 BEGIN
+   DECLARE v_user VARCHAR(100);
+   DECLARE v_rule VARCHAR(100);
+   DECLARE v_sql VARCHAR(1000);
+   DECLARE v_rou_typ VARCHAR(20);
 
-    DECLARE sql VARCHAR(1000);
-    DECLARE SQLSTATE CHAR(5);
+   -- For Tracing Purpose in Terminal type in 
+   -- SET SERVEROUTPUT ON
 
-    -- --------- HELP -------- 
-    -- SET SERVER_OUTPUT = YES
-    -- -----------------------
+   -- SELECT session_user INTO v_user FROM sysibm.sysdummy1;
+   -- SELECT secpolicyname INTO v_rule FROM syscat.securitypolicies;
 
-    CALL DBMS_OUTPUT.PUT_LINE('START');
-    EXECUTE IMMEDIATE 'SET CURRENT TEMPORAL BUSINESS_TIME = CURRENT DATE';
-    CALL DBMS_OUTPUT.PUT_LINE('BUSINESS TIME OK');
+   -- MAIN PROGRAM
+   INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,'*** BEGIN ***',0);
+   -- ----------- --
+   -- REVOKE USER --
+   -- ----------- --
+   CALL DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+   CALL DBMS_OUTPUT.PUT_LINE('REVOKE USER');
+   INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,'*** REVOKE USER ***',0);
+   FOR v_row AS SELECT * FROM sec.v_revoke_user
+   DO
+      SET v_sql = v_row.action || ' SETSESSIONUSER FOR USER ' || strip(v_row.surrogateauthid) || ' FROM USER ' || v_row.trustedid;
+      CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+      EXECUTE IMMEDIATE v_sql;
+      INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+   END FOR;
 
-    -- MAIN PROGRAM
-    INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,'*** BEGIN ***',0);
-    CALL DBMS_OUTPUT.PUT_LINE('LOG STARTED');
+   -- ----------- --
+   -- REVOKE ROLE --
+   -- ----------- --
+   CALL DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+   CALL DBMS_OUTPUT.PUT_LINE('REVOKE ROLE ACCESS');
+   INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,'*** REVOKE ROLE ACCESS ***',0);
+   FOR v_row AS SELECT * FROM sec.v_revoke_role_access
+   DO
+      SET v_sql = v_row.action || ' ROLE ' || strip(v_row.rolename) || ' FROM USER ' || v_row.grantee;
+      CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+      EXECUTE IMMEDIATE v_sql;
+      INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+   END FOR;
 
-    -- ** REVOKE
-    -- ** ** SETSESSIONUSER -----------------------------------------------------------
-    INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,'* REVOKE USER *',0);
-    CALL DBMS_OUTPUT.PUT_LINE('START REVOKE USER');
-    FOR v_row AS SELECT action, usr_name, con_usr FROM SEC.V_REVOKE_USER
-    DO
-    --
-        CALL DBMS_OUTPUT.PUT_LINE('REVOKE USER:' + usr_name);
-    --
-        IF v_row.action IS NOT NULL THEN
-            SET sql = action + ' SETSESSIONUSER ON USER ' + usr_name + ' FROM USER ' + con_usr;
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-    END FOR;
-    -- ** ** DROP ROLE ----------------------------------------------------------------
-    INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,'* REVOKE ROLE *',0);
-    CALL DBMS_OUTPUT.PUT_LINE('START DROP ROLE');
-    FOR v_row AS SELECT rol_name FROM SEC.V_REVOKE_ROLE
-    DO
-    --
-        CALL DBMS_OUTPUT.PUT_LINE('REVOKE ROLE:' + rol_name);
-    --
-        IF v_row.rol_name IS NOT NULL THEN
-            SET sql = 'DROP ROLE ' + rol_name;
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-    END FOR;
-    -- ** ** ROLE ACCESS --------------------------------------------------------------
-    INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,'* REVOKE ROLE ACCESS *',0);
-    CALL DBMS_OUTPUT.PUT_LINE('START REVOKE ROLE ACCESS');
-    FOR v_row AS SELECT action, rol_name, usr_name FROM SEC.V_REVOKE_ROLE_ACCESS
-    DO
-    --
-        CALL DBMS_OUTPUT.PUT_LINE('REVOKE ROLEAUTH:' + rol_name + ' FROM USER:' + usr_name);
-    --
-        IF v_row.action IS NOT NULL THEN
-            SET sql = action + ' ROLE ' + rol_name + ' FROM USER ' + usr_name;
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-    END FOR;
-    -- ** ** TABLE ACCESS -------------------------------------------------------------
-    INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,'* REVOKE TABLE ACCESS *',0);
-    CALL DBMS_OUTPUT.PUT_LINE('START REVOKE TABLE ACCESS');
-    FOR v_row AS SELECT tabschema,tabname,grantee,controlauth,deleteauth,insertauth,selectauth,updateauth
-                 FROM sec.v_revoke_table_access
-    DO
-    --
-        IF v_row.controlauth = 'Y' THEN
-            CALL DBMS_OUTPUT.PUT_LINE('REVOKE TABAUTH CTL:' + tabname + ' FROM USER:' + grantee);
-            SET sql = 'REVOKE CONTROL ON TABLE '||strip(tabschema)||'.'||strip(tabname)||' FROM ROLE '||strip(grantee);
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-        IF v_row.deleteauth = 'Y' THEN
-            CALL DBMS_OUTPUT.PUT_LINE('REVOKE TABAUTH DEL:' + tabname + ' FROM USER:' + grantee);
-            SET sql = 'REVOKE DELETE ON TABLE '||strip(tabschema)||'.'||strip(tabname)||' FROM ROLE '||strip(grantee);
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-        IF v_row.insertauth = 'Y' THEN
-            CALL DBMS_OUTPUT.PUT_LINE('REVOKE TABAUTH INS:' + tabname + ' FROM USER:' + grantee);
-            SET sql = 'REVOKE INSERT ON TABLE '||strip(tabschema)||'.'||strip(tabname)||' FROM ROLE '||strip(grantee);
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-        IF v_row.selectauth = 'Y' THEN
-            CALL DBMS_OUTPUT.PUT_LINE('REVOKE TABAUTH SEL:' + tabname + ' FROM USER:' + grantee);
-            SET sql = 'REVOKE SELECT ON TABLE '||strip(tabschema)||'.'||strip(tabname)||' FROM ROLE '||strip(grantee);
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-        IF v_row.updateauth = 'Y' THEN
-            CALL DBMS_OUTPUT.PUT_LINE('REVOKE TABAUTH UPD:' + tabname + ' FROM USER:' + grantee);
-            SET sql = 'REVOKE UPDATE ON TABLE '||strip(tabschema)||'.'||strip(tabname)||' FROM ROLE '||strip(grantee);
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-    END FOR;
-    -- ** ** ROUTINE ACCESS -----------------------------------------------------------
-    INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,'* REVOKE ROUTINE ACCESS *',0);
-    CALL DBMS_OUTPUT.PUT_LINE('START REVOKE ROUTINE ACCESS');
-    FOR v_row AS SELECT rou_schema,rou_specific,rou_type,rol_name
-              FROM SEC.V_REVOKE_ROUTINE_ACCESS
-    DO
-    --
-        CALL DBMS_OUTPUT.PUT_LINE('REVOKE EXECUTE:' + rou_specific + ' FROM USER:' + rol_name);
-    --
-        SET sql = 'REVOKE EXECUTE ON '||CASE WHEN rou_type = 'P' THEN 'PROCEDURE ' ELSE 'SPECIFIC FUNCTION ' END ||
-            strip(v_row.rou_schema)||'.'||
-            strip(CASE WHEN rou_type = 'P' THEN rou_specific ELSE rou_specific END )||' FROM ROLE '||strip(rol_name)||' RESTRICT';
-        EXECUTE IMMEDIATE sql;
-        INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-    END FOR;
-    -- ** ** SEQUENCE ACCESS ----------------------------------------------------------
-    INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,'* REVOKE SEQUENCE ACCESS *',0);
-    CALL DBMS_OUTPUT.PUT_LINE('START REVOKE SEQUENCE ACCESS');
-    FOR v_row AS SELECT seqschema,seqname,grantee
-              FROM SEC.V_REVOKE_SEQUENCE_ACCESS
-    DO
-    --
-        CALL DBMS_OUTPUT.PUT_LINE('REVOKE USE:' + seqname + ' FROM USER:' + grantee);
-    --
-        SET sql = 'REVOKE USAGE ON SEQUENCE '||strip(v_row.seqschema)||'.'||strip(v_row.seqname)||' FROM ROLE '||strip(grantee)||' RESTRICT';
-        EXECUTE IMMEDIATE sql;
-        INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-    END FOR;
-    -- --------------------------------------------------------------------------------
+   -- ------------ --
+   -- REVOKE TABLE --
+   -- ------------ --
+   CALL DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+   CALL DBMS_OUTPUT.PUT_LINE('REVOKE TABLE ACCESS');
+   INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,'*** REVOKE TABLE ACCESS ***',0);
+   FOR v_row AS SELECT * FROM sec.v_revoke_table_access
+   DO
+      IF current date NOT BETWEEN v_row.t2r_start AND v_row.t2r_end OR
+         current date NOT BETWEEN v_row.tbl_start AND v_row.tbl_end OR
+         current date NOT BETWEEN v_row.rol_start AND v_row.rol_end
+      THEN
+         IF t2r_ctlauth = 'Y'
+         THEN
+            SET v_sql = v_row.action || ' CONTROL ON TABLE ' || strip(v_row.tabschema) || '.' || v_row.tabname || ' FROM ROLE ' || v_row.grantee;
+            CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+         END IF;
+         IF t2r_delauth = 'Y'
+         THEN
+            SET v_sql = v_row.action || ' DELETE ON TABLE ' || strip(v_row.tabschema) || '.' || v_row.tabname || ' FROM ROLE ' || v_row.grantee;
+            CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+         END IF;
+         IF t2r_insauth = 'Y'
+         THEN
+            SET v_sql = v_row.action || ' INSERT ON TABLE ' || strip(v_row.tabschema) || '.' || v_row.tabname || ' FROM ROLE ' || v_row.grantee;
+            CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+         END IF;
+         IF t2r_selauth = 'Y'
+         THEN
+            SET v_sql = v_row.action || ' SELECT ON TABLE ' || strip(v_row.tabschema) || '.' || v_row.tabname || ' FROM ROLE ' || v_row.grantee;
+            CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+         END IF;
+         IF t2r_updauth = 'Y'
+         THEN
+            SET v_sql = v_row.action || ' UPDATE ON TABLE ' || strip(v_row.tabschema) || '.' || v_row.tabname || ' FROM ROLE ' || v_row.grantee;
+            CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+         END IF;
+      ELSE
+         IF v_row.controlauth = 'Y' AND v_row.t2r_ctlauth = 'N'
+         THEN
+            SET v_sql = v_row.action || ' CONTROL ON TABLE ' || strip(v_row.tabschema) || '.' || v_row.tabname || ' FROM ROLE ' || v_row.grantee;
+            CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+         END IF;
+         IF v_row.deleteauth = 'Y' AND v_row.t2r_delauth = 'N'
+         THEN
+            SET v_sql = v_row.action || ' DELETE ON TABLE ' || strip(v_row.tabschema) || '.' || v_row.tabname || ' FROM ROLE ' || v_row.grantee;
+            CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+         END IF;
+         IF v_row.insertauth = 'Y' AND v_row.t2r_insauth = 'N'
+         THEN
+            SET v_sql = v_row.action || ' INSERT ON TABLE ' || strip(v_row.tabschema) || '.' || v_row.tabname || ' FROM ROLE ' || v_row.grantee;
+            CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+         END IF;
+         IF v_row.selectauth = 'Y' AND v_row.t2r_selauth = 'N'
+         THEN
+            SET v_sql = v_row.action || ' SELECT ON TABLE ' || strip(v_row.tabschema) || '.' || v_row.tabname || ' FROM ROLE ' || v_row.grantee;
+            CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+         END IF;
+         IF v_row.updateauth = 'Y' AND v_row.t2r_updauth = 'N'
+         THEN
+            SET v_sql = v_row.action || ' UPDATE ON TABLE ' || strip(v_row.tabschema) || '.' || v_row.tabname || ' FROM ROLE ' || v_row.grantee;
+            CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+         END IF;
+      END IF;
+   END FOR;
 
-    -- ** GRANT
-    -- ** ** SETSESSIONUSER -----------------------------------------------------------
-    INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,'* GRANT USER *',0);
-    CALL DBMS_OUTPUT.PUT_LINE('START GRANT USER');
-    FOR v_row AS SELECT action, usr_name, con_usr FROM SEC.V_GRANT_USER
-    DO
-    --
-        CALL DBMS_OUTPUT.PUT_LINE('GRANT USER:' + usr_name);
-    --
-        IF v_row.action IS NOT NULL THEN
-            SET sql = action + ' SETSESSIONUSER ON USER ' + usr_name + ' TO USER ' + con_usr;
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-    END FOR;
-    -- ** ** CREATE ROLE --------------------------------------------------------------
-    INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,'* GRANT ROLE *',0);
-    CALL DBMS_OUTPUT.PUT_LINE('START CREATE ROLE');
-    FOR v_row AS SELECT rol_name FROM SEC.V_GRANT_ROLE
-    DO
-    --
-        CALL DBMS_OUTPUT.PUT_LINE('GRANT ROLE:' + rol_name);
-    --
-        IF v_row.rol_name IS NOT NULL THEN
-            SET sql = 'CREATE ROLE ' + rol_name;
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-    END FOR;
-    -- ** ** ROLE ACCESS --------------------------------------------------------------
-    INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,'* GRANT ROLE ACCESS *',0);
-    CALL DBMS_OUTPUT.PUT_LINE('START GRANT ROLE ACCESS');
-    FOR v_row AS SELECT action, rol_name, usr_name FROM SEC.V_GRANT_ROLE_ACCESS WHERE usr_name IS NOT NULL
-    DO
-    --
-        CALL DBMS_OUTPUT.PUT_LINE('GRANT ROLEAUTH:' + rol_name + ' TO USER:' + usr_name);
-    --
-        IF v_row.action IS NOT NULL THEN
-            SET sql = action + ' ROLE ' + rol_name + ' TO USER ' + usr_name;
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-    END FOR;
-    -- ** ** TABLE ACCESS -------------------------------------------------------------
-    INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,'* GRANT TABLE ACCESS *',0);
-    CALL DBMS_OUTPUT.PUT_LINE('START GRANT TABLE ACCESS');
-    FOR v_row AS SELECT tbl_schema,tbl_name,rol_name,t2r_ctlauth,
-                        t2r_delauth,t2r_insauth,t2r_selauth,t2r_updauth
-                 FROM sec.v_grant_table_access
-    DO
-    --
-        IF v_row.t2r_ctlauth = 'Y' THEN
-            SET sql = 'GRANT CONTROL ON TABLE '||strip(v_row.tbl_schema)||'.'||strip(v_row.tbl_name)||
-                ' TO ROLE '||strip(rol_name);
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-        IF v_row.t2r_delauth = 'Y' THEN
-            SET sql = 'GRANT DELETE ON TABLE '||strip(v_row.tbl_schema)||'.'||strip(v_row.tbl_name)||
-                ' TO ROLE '||strip(rol_name);
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-        IF v_row.t2r_insauth = 'Y' THEN
-            SET sql = 'GRANT INSERT ON TABLE '||strip(v_row.tbl_schema)||'.'||strip(v_row.tbl_name)||
-                ' TO ROLE '||strip(rol_name);
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-        IF v_row.t2r_selauth = 'Y' THEN
-            SET sql = 'GRANT SELECT ON TABLE '||strip(v_row.tbl_schema)||'.'||strip(v_row.tbl_name)||
-                ' TO ROLE '||strip(rol_name);
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-        IF v_row.t2r_updauth = 'Y' THEN
-            SET sql = 'GRANT UPDATE ON TABLE '||strip(v_row.tbl_schema)||'.'||strip(v_row.tbl_name)||
-                ' TO ROLE '||strip(rol_name);
-            EXECUTE IMMEDIATE sql;
-            INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-        END IF;
-    END FOR;
-    -- ** ** ROUTINE ACCESS -----------------------------------------------------------
-    INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,'* GRANT ROUTINE ACCESS *',0);
-    CALL DBMS_OUTPUT.PUT_LINE('START GRANT ROUTINE ACCESS');
-    FOR v_row AS SELECT rou_schema,rou_name,rou_specific,rou_type,rol_name
-              FROM SEC.V_GRANT_ROUTINE_ACCESS
-    DO
-    --
-        CALL DBMS_OUTPUT.PUT_LINE('GRANT EXECUTE:' +rou_specific + ' TO USER:'+ rol_name);
-    --
-        SET sql = 'GRANT EXECUTE ON '||CASE WHEN rou_type = 'P' THEN 'PROCEDURE ' ELSE 'SPECIFIC FUNCTION ' END ||
-            strip(v_row.rou_schema)||'.'||
-            strip(CASE WHEN rou_type = 'P' THEN rou_name ELSE rou_specific END )||' TO ROLE '||strip(rol_name);
-        EXECUTE IMMEDIATE sql;
-        INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-    END FOR;
-    -- ** ** SEQUENCE ACCESS ----------------------------------------------------------
-    INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,'* GRANT SEQUENCE ACCESS *',0);
-    CALL DBMS_OUTPUT.PUT_LINE('START GRANT SEQUENCE ACCESS');
-    FOR v_row AS SELECT seq_schema,seq_name,rol_name
-              FROM SEC.V_GRANT_SEQUENCE_ACCESS
-    DO
-    --
-        CALL DBMS_OUTPUT.PUT_LINE('GRANT USE:' + seq_name + ' T USER:' + rol_name);
-    --
-        SET sql = 'GRANT USAGE ON SEQUENCE '||strip(v_row.seq_schema)||'.'||strip(v_row.seq_name)||' TO ROLE '||strip(rol_name);
-        EXECUTE IMMEDIATE sql;
-        INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,sql,SQLSTATE);
-    END FOR;
-    -- --------------------------------------------------------------------------------
+   -- -------------- --
+   -- REVOKE ROUTINE --
+   -- -------------- --
+   CALL DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+   CALL DBMS_OUTPUT.PUT_LINE('REVOKE ROUTINE ACCESS');
+   INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,'*** REVOKE ROUTINE ACCESS ***',0);
+   FOR v_row AS SELECT * FROM sec.v_revoke_routine_access
+   DO
+      IF v_row.routinetype = 'F'
+      THEN
+         SET v_rou_typ = 'FUNCTION';
+      ELSE
+         SET v_rou_typ = 'PROCEDURE';
+      END IF;
+      SET v_sql = v_row.action || ' EXECUTE ON SPECIFIC ' || v_rou_typ || ' ' || strip(v_row.schema) || '.' || v_row.specificname || ' FROM ROLE ' || v_row.grantee || ' RESTRICT';
+      CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+      EXECUTE IMMEDIATE v_sql;
+      INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+   END FOR;
 
-    INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,'*** END ***',0);
+   -- --------------- --
+   -- REVOKE SEQUENCE --
+   -- --------------- --
+   CALL DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+   CALL DBMS_OUTPUT.PUT_LINE('REVOKE SEQUENCE ACCESS');
+   INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,'*** REVOKE SEQUENCE ACCESS ***',0);
+   FOR v_row AS SELECT * FROM sec.v_revoke_sequence_access
+   DO
+      SET v_sql = v_row.action || ' USAGE ON SEQUENCE ' || strip(v_row.seqschema) || '.' || v_row.seqname || ' FROM ROLE ' || v_row.grantee;
+      CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+      EXECUTE IMMEDIATE v_sql;
+      INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+   END FOR;
 
+   -- ---------- --
+   -- GRANT USER --
+   -- ---------- --
+   CALL DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+   CALL DBMS_OUTPUT.PUT_LINE('GRANT USER');
+   INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,'*** GRANT USER ***',0);
+   FOR v_row AS SELECT * FROM sec.v_grant_user
+   DO
+      SET v_sql = v_row.action || ' SETSESSIONUSER ON USER ' || strip(v_row.usr_name) || ' TO USER ' || v_row.usr_connect;
+      CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+      EXECUTE IMMEDIATE v_sql;
+      INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+   END FOR;
+
+   -- ---------- --
+   -- GRANT ROLE --
+   -- ---------- --
+   CALL DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+   
+   CALL DBMS_OUTPUT.PUT_LINE('CREATE ROLE');
+   INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,'*** CREATE ROLE ***',0);
+   FOR v_row AS SELECT * FROM sec.v_grant_role
+   DO
+      SET v_sql = 'CREATE ROLE ' || v_row.rol_name;
+      CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+      EXECUTE IMMEDIATE v_sql;
+      INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+   END FOR;
+
+   CALL DBMS_OUTPUT.PUT_LINE('GRANT ROLE ACCESS');
+   INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,'*** GRANT ROLE ACCESS ***',0);
+   FOR v_row AS SELECT * FROM sec.v_grant_role_access
+   DO
+      SET V_sql = v_row.action || ' ROLE ' || strip(v_row.rol_name) || ' TO USER ' || v_row.usr_name;
+      CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+      EXECUTE IMMEDIATE v_sql;
+      INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+   END FOR;
+
+   -- ----------- --
+   -- GRANT TABLE --
+   -- ----------- --
+   CALL DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+   CALL DBMS_OUTPUT.PUT_LINE('GRANT TABLE ACCESS');
+   INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,'*** GRANT TABLE ACCESS ***',0);
+   FOR v_row AS SELECT * FROM sec.v_grant_table_access
+   DO
+      IF current date BETWEEN v_row.t2r_start AND v_row.t2r_end AND
+         current date BETWEEN v_row.tbl_start AND v_row.tbl_end AND
+         current date BETWEEN v_row.rol_start AND v_row.rol_end
+      THEN
+         IF v_row.t2r_ctlauth = 'Y' AND (v_row.controlauth = 'N' OR v_row.controlauth IS NULL)
+         THEN
+            SET v_sql = v_row.action || ' CONTROL ON TABLE ' || strip(v_row.tbl_schema) || '.' || v_row.tbl_name || ' TO ROLE ' || v_row.rol_name;
+            CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+         END IF;
+         IF v_row.t2r_delauth = 'Y' AND (v_row.deleteauth = 'N' OR v_row.deleteauth IS NULL)
+         THEN
+            SET v_sql = v_row.action || ' DELETE ON TABLE ' || strip(v_row.tbl_schema) || '.' || v_row.tbl_name || ' TO ROLE ' || v_row.rol_name;
+            CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+         END IF;
+         IF v_row.t2r_insauth = 'Y' AND (v_row.insertauth = 'N' OR v_row.insertauth IS NULL)
+         THEN
+            SET v_sql = v_row.action || ' INSERT ON TABLE ' || strip(v_row.tbl_schema) || '.' || v_row.tbl_name || ' TO ROLE ' || v_row.rol_name;
+            CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+         END IF;
+         IF v_row.t2r_selauth = 'Y' AND (v_row.selectauth = 'N' OR v_row.selectauth IS NULL)
+         THEN
+            SET v_sql = v_row.action || ' SELECT ON TABLE ' || strip(v_row.tbl_schema) || '.' || v_row.tbl_name || ' TO ROLE ' || v_row.rol_name;
+            CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+         END IF;
+         IF v_row.t2r_updauth = 'Y' AND (v_row.updateauth = 'N' OR v_row.updateauth IS NULL)
+         THEN
+            SET v_sql = v_row.action || ' UPDATE ON TABLE ' || strip(v_row.tbl_schema) || '.' || v_row.tbl_name || ' TO ROLE ' || v_row.rol_name;
+            CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+            EXECUTE IMMEDIATE v_sql;
+            INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+         END IF;
+      END IF;
+   END FOR;
+
+   -- ------------- --
+   -- GRANT ROUTINE --
+   -- ------------- --
+   CALL DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+   CALL DBMS_OUTPUT.PUT_LINE('GRANT ROUTINE ACCESS');
+   INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,'*** GRANT ROUTINE ACCESS ***',0);
+   FOR v_row AS SELECT * FROM sec.v_grant_routine_access
+   DO
+      IF v_row.rou_type = 'F'
+      THEN
+         SET v_rou_typ = 'FUNCTION';
+      ELSE
+         SET v_rou_typ = 'PROCEDURE';
+      END IF;
+      SET v_sql = v_row.action || ' EXECUTE ON SPECIFIC ' || v_rou_typ || ' ' || strip(v_row.rou_schema) || '.' || v_row.rou_specific || ' TO ROLE ' || v_row.rol_name;
+      CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+      EXECUTE IMMEDIATE v_sql;
+      INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+   END FOR;
+
+   -- -------------- --
+   -- GRANT SEQUENCE --
+   -- -------------- --
+   CALL DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+   CALL DBMS_OUTPUT.PUT_LINE('GRANT SEQUENCE ACCESS');
+   INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,'*** GRANT SEQUENCE ACCESS ***',0);
+   FOR v_row AS SELECT * FROM sec.v_grant_sequence_access
+   DO
+      SET v_sql = v_row.action || ' USAGE ON SEQUENCE ' || strip(v_row.seq_schema) || '.' || v_row.seq_name || ' TO ROLE ' || v_row.rol_name;
+      CALL DBMS_OUTPUT.PUT_LINE(v_sql);
+      EXECUTE IMMEDIATE v_sql;
+      INSERT INTO sec.t_log2 (sys_time, sys_sql, sys_state) VALUES (CURRENT TIMESTAMP,v_sql,0);
+   END FOR;
+   INSERT INTO sec.t_log2 (sys_time,sys_sql,sys_state) VALUES (CURRENT TIMESTAMP,'*** END ***',0);
+   
 END"""
+
 
 
 class Setup():
@@ -664,8 +769,8 @@ class Setup():
 
     def connect_instance_user(self) -> bool:
         flag:bool = False
-        tmp_usr = simpledialog.askstring(title="User",prompt="Input name for the INSTANCE user")
-        tmp_pwd = simpledialog.askstring(title="Password",prompt="Input password for the INSTANCE user",show="*")
+        tmp_usr = simpledialog.askstring(title="User",prompt="NAME for the INSTANCE user")
+        tmp_pwd = simpledialog.askstring(title="Password",prompt="PASSWORD for the INSTANCE user",show="*")
         ssl_tmp:str = ""
         if self.ssl_pth.get():
             if self.ssl_key.get():
@@ -696,7 +801,7 @@ class Setup():
         flag = False
         tmp_usr = self.con_usr.get()
         tmp_usr = tmp_usr.upper()
-        tmp_pwd = simpledialog.askstring(title="Password",prompt="Input password for the CONNECT user",show="*")
+        tmp_pwd = simpledialog.askstring(title="Password",prompt="PASSWORD for the CONNECT user",show="*")
         ssl_tmp:str = ""
         if self.ssl_pth.get():
             if self.ssl_key.get():
@@ -1039,6 +1144,13 @@ class Setup():
         self.con_db2.exec(sql)
         sql = f"GRANT CONNECT ON DATABASE TO ROLE SEC_CONNECT"
         self.con_db2.exec(sql)
+        sql = f"CREATE ROLE SEC_LOAD"
+        self.con_db2.exec(sql)
+        sql = f"GRANT LOAD ON DATABASE TO ROLE SEC_LOAD"
+        self.con_db2.exec(sql)
+        sql = f"INSERT INTO sec.t_role (rol_id,rol_name,rol_start,rol_end,rol_type) VALUES (-2,'SEC_LOAD','1900-01-01','2999-12-31','RBAC')"
+        self.con_db2.exec(sql)
+
 
 
 if __name__ == '__main__':

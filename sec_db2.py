@@ -1,5 +1,11 @@
 #!/usr/bin/python3
 
+## Db2 Security-System
+## Version 1.0
+## Manfred Wagner
+## info@manfred-wagner.at
+
+
 from tkinter import messagebox
 import sys
 # import the db2-driver

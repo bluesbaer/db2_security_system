@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+## Db2 Security-System
+## Version 1.0
+## Manfred Wagner
+## info@manfred-wagner.at
+
+
 import tkinter as tk
 from tkinter import ttk, simpledialog
 from datetime import datetime
@@ -268,7 +274,7 @@ class Gui(tk.Tk):
         self.db2.exec(i3_sql)
         # Get the Name of the Instance-User
         self.ins_usr = simpledialog.askstring(title="INSTANZ-USER",\
-            prompt="Input name for instanceuser:")
+            prompt="NAME for the INSTANCE user:")
         # SEC_USER => INSTANCE_USER
         self.connect_to_db(self.ins_usr)
         # GRANT LABEL ... TO USER SEC_USER
@@ -294,6 +300,9 @@ class Gui(tk.Tk):
         pass
 
     def add_schema_client(self):
+        self.db2.exec(f"SET SESSION_USER = {self.adm_usr.get().upper()}")
+        self.db2.exec(f"CREATE SCHEMA {self.sch_name.get().upper()}")
+        self.db2.exec(f"SET SESSION_USER = {self.sec_usr.get().upper()}")
         # GRANT DB-AUTH
         a1_sql = f"GRANT CONNECT ON DATABASE TO USER {self.sch_con_usr.get().upper()}"
         #a2_sql = f"GRANT SCHEMAADM WITHOUT DATAACCESS WITHOUT ACCESSCTRL ON DATABASE TO USER {self.sch_adm_usr.get().upper()}"
@@ -315,6 +324,10 @@ class Gui(tk.Tk):
         c1_sql = f"SELECT count(*) AS anzahl FROM syscat.securitylabelcomponents WHERE compname = 'SEC_LEVEL'"
         c2_sql = f"SELECT count(*) AS anzahl FROM syscat.securitylabelcomponentelements WHERE elementvalue = '{self.sch_name.get().upper()}'"
         c3_sql = f"SELECT count(*) AS anzahl FROM syscat.securitylabels WHERE seclabelname = 'SEC_{self.sch_name.get().upper()}'"
+        # GRANT SECURITY-PROCEDURE
+        sp_sql = f"GRANT EXECUTE ON SPECIFIC PROCEDURE SEC.SECURITY2 TO USER {self.sch_sec_usr.get().upper()}"
+        # Execute GRANT sp_sql
+        self.db2.exec(sp_sql)
         # Execute GRANTS a1 - a5
         for x_sql in [a1_sql, a2_sql, a3_sql, a4_sql, a5_sql]:
             self.log_file.write(f"### (x_sql):{x_sql}\n")
@@ -413,8 +426,8 @@ class Gui(tk.Tk):
                 tmp_ssl += "SSLClientKeystash="+self.ssl_path.get()+"/"+self.ssl_stash.get()
                 tmp_ssl = ";SECURITY=ssl;" + tmp_ssl
         if instance_user == "":
-            tmp_pwd = simpledialog.askstring(title="Password",\
-                prompt="Input password for user >> "+str(self.con_usr.get())+" <<",show="*")
+            tmp_pwd = simpledialog.askstring(title="!!! PASSWORD !!!",\
+                prompt="PASSWORD for the CONNECT user >> "+str(self.con_usr.get())+" <<",show="*")
             if tmp_pwd:
                 con_flag = self.db2.open(self.srv_name.get(),self.srv_port.get(),self.db_name.get(),tmp_ssl,self.con_usr.get(),tmp_pwd)
                 if con_flag:
@@ -428,8 +441,8 @@ class Gui(tk.Tk):
                 else:
                     self.error_msg.set("")
         else:
-            tmp_pwd = simpledialog.askstring(title="Password",\
-                prompt="Input password for user >> "+str(instance_user)+" <<",show="*")
+            tmp_pwd = simpledialog.askstring(title="!!! PASSWORD !!!",\
+                prompt="PASSWORD for the INSTANCE user >> "+str(instance_user)+" <<",show="*")
             if tmp_pwd:
                 con_flag = self.db2.open(self.srv_name.get(),self.srv_port.get(),self.db_name.get(),tmp_ssl,instance_user,tmp_pwd)
                 if con_flag:

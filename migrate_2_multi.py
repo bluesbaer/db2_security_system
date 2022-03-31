@@ -1,4 +1,11 @@
 #!/dev/usr python
+
+## Db2 Security-System
+## Version 1.0
+## Manfred Wagner
+## info@manfred-wagner.at
+
+
 import sec_db2
 
 server = 'db2amdmt'
@@ -36,10 +43,8 @@ sql_tbl2rol = "SELECT * FROM sec.t_tbl2rol WHERE t2r_tbl_id = §id§"
 sql_role = "SELECT * FROM sec.t_role WHERE rol_id = §id§"
 sql_routine = "SELECT * FROM sec.t_routine WHERE rou_schema = '§schema§'"
 sql_rou2rol = "SELECT * FROM sec.t_rou2rol WHERE r2r_rou_id = §id§"
-#SELECT * FROM sec.t_role WHERE rol_id = §id§
 sql_sequence = "SELECT * FROM sec.t_sequence WHERE seq_schema = '§schema§'"
 sql_seq2rol = "SELECT * FROM sec.t_seq2rol WHERE s2r_seq_id = §id§"
-#SELECT * FROM sec.t_role WHERE rol_id = §id§
 sql_usr2rol = "SELECT * FROM sec.t_usr2rol WHERE u2r_rol_id = §id§"
 sql_user = "SELECT * FROM sec.t_user WHERE usr_id = §id§"
 
@@ -142,24 +147,36 @@ def get_user(id):
     pass
 
 def write_data(schema):
-    if dbuser_list:
-        write_routine(f'{schema}_USER.csv',dbuser_list)
-    if role_list:
-        write_routine(f'{schema}_ROLE.csv',role_list)
-    if table_list:
-        write_routine(f'{schema}_TABLE.csv',table_list)
-    if routine_list:
-        write_routine(f'{schema}_ROUTINE.csv',routine_list)
-    if sequence_list:
-        write_routine(f'{schema}_SEQUENCE.csv',sequence_list)
-    if usr2rol_list:
-        write_routine(f'{schema}_USR2ROL.csv',usr2rol_list)
-    if tbl2rol_list:
-        write_routine(f'{schema}_TBL2ROL.csv',tbl2rol_list)
-    if rou2rol_list:
-        write_routine(f'{schema}_ROU2ROL.csv',rou2rol_list)
-    if seq2rol_list:
-        write_routine(f'{schema}_SEQ2ROL.csv',seq2rol_list)
+    with open(f'{schema}_IMPORT.sql','w+') as cover:
+        cover.write(f'--#SET TERMINATOR @\n')
+        if dbuser_list:
+            write_routine(f'{schema}_USER.csv',dbuser_list)
+            cover.write(f'IMPORT FROM {schema}_USER OF DEL MODIFIED BY COLDEL; IMPLICITLYHIDDENMISSING INSERT INTO sec.t_user\n')
+        if role_list:
+            write_routine(f'{schema}_ROLE.csv',role_list)
+            cover.write(f'IMPORT FROM {schema}_ROLE OF DEL MODIFIED BY COLDEL; IMPLICITLYHIDDENMISSING INSERT INTO sec.t_role\n')
+        if table_list:
+            write_routine(f'{schema}_TABLE.csv',table_list)
+            cover.write(f'IMPORT FROM {schema}_TABLE OF DEL MODIFIED BY COLDEL; IMPLICITLYHIDDENMISSING INSERT INTO sec.t_table\n')
+        if routine_list:
+            write_routine(f'{schema}_ROUTINE.csv',routine_list)
+            cover.write(f'IMPORT FROM {schema}_ROUTINE OF DEL MODIFIED BY COLDEL; IMPLICITLYHIDDENMISSING INSERT INTO sec.t_routine\n')
+        if sequence_list:
+            write_routine(f'{schema}_SEQUENCE.csv',sequence_list)
+            cover.write(f'IMPORT FROM {schema}_SEQUENCE OF DEL MODIFIED BY COLDEL; IMPLICITLYHIDDENMISSING INSERT INTO sec.t_sequence\n')
+        if usr2rol_list:
+            write_routine(f'{schema}_USR2ROL.csv',usr2rol_list)
+            cover.write(f'IMPORT FROM {schema}_USR2ROL OF DEL MODIFIED BY COLDEL; IMPLICITLYHIDDENMISSING INSERT INTO sec.t_usr2rol\n')
+        if tbl2rol_list:
+            write_routine(f'{schema}_TBL2ROL.csv',tbl2rol_list)
+            cover.write(f'IMPORT FROM {schema}_TBL2ROL OF DEL MODIFIED BY COLDEL; IMPLICITLYHIDDENMISSING INSERT INTO sec.t_tbl2rol\n')
+        if rou2rol_list:
+            write_routine(f'{schema}_ROU2ROL.csv',rou2rol_list)
+            cover.write(f'IMPORT FROM {schema}_ROU2ROL OF DEL MODIFIED BY COLDEL; IMPLICITLYHIDDENMISSING INSERT INTO sec.t_rou2rol\n')
+        if seq2rol_list:
+            write_routine(f'{schema}_SEQ2ROL.csv',seq2rol_list)
+            cover.write(f'IMPORT FROM {schema}_SEQ2ROL OF DEL MODIFIED BY COLDEL; IMPLICITLYHIDDENMISSING INSERT INTO sec.t_seq2rol\n')
+        cover.close()
     pass
 
 def write_routine(item,item_list):
@@ -172,12 +189,6 @@ def write_routine(item,item_list):
             file.write(f'{record[:-1]}\n')
         file.close()
     # --------------------------------------------------
-    #print(item)
-    #for line in item_list:
-    #    record:str = ''
-    #    for key in line.keys():
-    #        record += f'{line[key]};'
-    #    print(record[:-1])
     pass
 
 get_schema()
@@ -199,15 +210,6 @@ for schema in schema_list:
     print("--------------------------------------------------------------------------------")
     print(f"Schema:{schema}")
     write_data(schema)
-    #print(f"Table:{table_list}")
-    #print(f"Table To Role:{tbl2rol_list}")
-    #print(f"Routine:{routine_list}")
-    #print(f"Routine To Role:{rou2rol_list}")
-    #print(f"Sequence:{sequence_list}")
-    #print(f"Sequence To Role:{seq2rol_list}")
-    #print(f"Role:{role_list}")
-    #print(f"User To Role:{usr2rol_list}")
-    #print(f"User:{dbuser_list}")
     table_list, routine_list, sequence_list = [], [], []
     tbl2rol_list, rou2rol_list, seq2rol_list = [], [], []
     role_list, usr2rol_list, dbuser_list = [], [], []

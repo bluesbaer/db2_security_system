@@ -1,3 +1,8 @@
+## Db2 Security-System
+## Version 1.0
+## Manfred Wagner
+## info@manfred-wagner.at
+
 
 class ErrorChecker():
 

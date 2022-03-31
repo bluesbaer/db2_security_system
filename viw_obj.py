@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+## Db2 Security-System
+## Version 1.0
+## Manfred Wagner
+## info@manfred-wagner.at
+
+
 import tkinter as tk
 from tkinter import ttk, simpledialog
 import ctl_obj
@@ -1357,7 +1363,7 @@ class GuiFrames(tk.Tk):
                 tmp_ssl += "SSLClientKeystash="+self.ssl_path.get()+"/"+self.ssl_stash.get()
                 tmp_ssl = ";SECURITY=ssl;" + tmp_ssl
         tmp_pwd = simpledialog.askstring(title="Password",\
-            prompt="Input password for user >> "+str(self.con_usr.get())+" <<",show="*")
+            prompt="PASSWORD for the CONNECT user >> "+str(self.con_usr.get())+" <<",show="*")
         if tmp_pwd:
             con_flag = self.conn.open(self.srv_name.get(),self.srv_port.get(),self.db_name.get(),tmp_ssl,self.con_usr.get(),tmp_pwd)
             if con_flag:
